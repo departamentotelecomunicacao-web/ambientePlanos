@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Fatura Expert — Planos</title>
+<!-- preconnect elimina a negociação DNS+TCP antes de pedir a fonte -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- preload + onload = fonte carrega em paralelo sem bloquear o render -->
+<link rel="preload" as="style"
+  href="https://fonts.googleapis.com/css2?family=Sora:wght@400;700;800&family=Outfit:wght@400;500;600;700&display=swap"
+  onload="this.rel='stylesheet'">
+<noscript>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;700;800&family=Outfit:wght@400;500;600;700&display=swap">
+</noscript>
+<style>
+:root{
+  --bg:#F4F6FB;--white:#FFFFFF;--text:#0D1B35;--soft:#5A6B8A;
+  --orange:#FF6B1A;--orange2:#FF8C45;--blue:#2563EB;--blue2:#3A7BD5;
+  --border:#E2E8F4;--wa:#25D366;--radius:16px;
+  --sh:0 2px 14px rgba(13,27,53,.08);
+  --card-bg:#FFFFFF;--input-bg:#F8FAFF;--input-focus:#fff;
+  --modal-bg:#FFFFFF;--modal-over:rgba(13,27,53,.5);
+  --gb-bg:linear-gradient(135deg,#F0F5FF,#F8FBFF);
+  --qty-bg:#F0F5FF;--total-bg:#FFF5EE;
+  --toggle-bg:#E2E8F4;--toggle-ico:"🌙";
+}
+[data-theme="dark"]{
+  --bg:#0F1623;--white:#1A2235;--text:#E8EDF8;--soft:#8A9BB8;
+  --orange:#FF7A2F;--orange2:#FF9B5A;--blue:#4080FF;--blue2:#5A95FF;
+  --border:#263050;--sh:0 2px 14px rgba(0,0,0,.35);
+  --card-bg:#1A2235;--input-bg:#0F1623;--input-focus:#1A2235;
+  --modal-bg:#1A2235;--modal-over:rgba(0,0,0,.7);
+  --gb-bg:linear-gradient(135deg,#1A2B4A,#1E3050);
+  --qty-bg:#1A2B4A;--total-bg:#2A1A10;
+  --toggle-bg:#263050;--toggle-ico:"☀️";
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{font-size:16px;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s;}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 0% 0%,rgba(37,99,235,.06) 0%,transparent 60%),
+             radial-gradient(ellipse 50% 40% at 100% 100%,rgba(255,107,26,.05) 0%,transparent 55%);}
+
+/* ── THEME TOGGLE ── */
+.theme-toggle{
+  position:fixed;top:12px;right:12px;z-index:199;
+  background:var(--toggle-bg);border:1.5px solid var(--border);color:var(--text);
+  border-radius:50px;padding:7px 14px;font-size:.75rem;font-weight:700;
+  cursor:pointer;font-family:'Outfit',sans-serif;
+  display:flex;align-items:center;gap:5px;
+  transition:opacity .2s,transform .2s,box-shadow .2s;
+  box-shadow:0 2px 10px rgba(0,0,0,.12);
+  white-space:nowrap;
+}
+.theme-toggle:hover{border-color:var(--blue);color:var(--blue);}
+.theme-toggle-icon{font-size:.9rem;line-height:1;}
+.theme-toggle-icon::after{content:var(--toggle-ico);}
+@media(max-width:640px){
+  .theme-lbl{display:none;}
+  .theme-toggle{padding:8px 11px;gap:0;border-radius:50px;}
+  .theme-toggle-icon{font-size:1.05rem;}
+}
+.theme-toggle.hidden{opacity:0;pointer-events:none;transform:scale(.85);}
+
+/* ── HERO ── */
+.hero{position:relative;z-index:1;text-align:center;padding:62px 20px 20px;}
+.hero-wa{display:inline-flex;align-items:center;gap:8px;background:var(--wa);color:#fff;border:none;border-radius:50px;padding:10px 22px;font-size:.9rem;font-weight:700;font-family:'Outfit',sans-serif;text-decoration:none;box-shadow:0 4px 16px rgba(37,211,102,.32);transition:transform .2s,box-shadow .2s;margin-bottom:18px;animation:fadeUp .5s ease both;}
+.hero-wa:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(37,211,102,.45);}
+.hero-wa svg{width:17px;height:17px;fill:#fff;flex-shrink:0;}
+.hero h1{font-family:'Sora',sans-serif;font-size:clamp(1.65rem,7.5vw,3.2rem);font-weight:800;line-height:1.18;color:var(--text);animation:fadeUp .6s .08s ease both;}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--blue),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.trust-bar{position:relative;z-index:1;display:flex;gap:7px;overflow-x:auto;padding:16px 16px 18px;scrollbar-width:none;-ms-overflow-style:none;animation:fadeUp .6s .14s ease both;}
+.trust-bar::-webkit-scrollbar{display:none;}
+.trust-item{white-space:nowrap;flex-shrink:0;background:var(--white);border:1px solid var(--border);border-radius:50px;padding:7px 12px;font-size:.74rem;color:var(--soft);font-weight:500;box-shadow:0 1px 4px rgba(13,27,53,.05);}
+
+/* ── FILTERS ── */
+.filters-wrapper{position:relative;z-index:1;padding:0 16px 6px;animation:fadeUp .6s .18s ease both;}
+.filter-group-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--soft);margin-bottom:7px;padding-left:2px;display:flex;align-items:center;gap:6px;}
+.filter-group-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.filter-bar{display:flex;gap:7px;overflow-x:auto;padding-bottom:14px;scrollbar-width:none;-ms-overflow-style:none;}
+.filter-bar::-webkit-scrollbar{display:none;}
+.filter-btn{white-space:nowrap;flex-shrink:0;background:var(--white);border:1px solid var(--border);border-radius:50px;padding:8px 16px;font-size:.82rem;font-weight:600;color:var(--soft);cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;display:flex;align-items:center;gap:7px;box-shadow:0 1px 4px rgba(13,27,53,.05);}
+.filter-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--qty-bg);}
+.filter-btn.active{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 3px 10px rgba(37,99,235,.28);}
+.filter-btn.vivo.active{background:#6610f2;border-color:#6610f2;}
+.filter-btn.claro.active{background:#e61e1e;border-color:#e61e1e;}
+.filter-btn.cat-movel.active{background:linear-gradient(135deg,#2563EB,#3A7BD5);border-color:#2563EB;}
+.filter-btn.cat-internet.active{background:linear-gradient(135deg,#0891b2,#06b6d4);border-color:#0891b2;}
+.filter-btn.cat-combo.active{background:linear-gradient(135deg,#7c3aed,#8b5cf6);border-color:#7c3aed;}
+.filter-btn.cat-imperdivel.active{background:linear-gradient(135deg,#c2185b,#e91e63);border-color:#c2185b;}
+.op-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;}
+.dot-vivo{background:#6610f2;}.dot-claro{background:#e61e1e;}.dot-all{background:linear-gradient(135deg,#6610f2,#e61e1e);}
+.results-bar{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:0 16px 12px;animation:fadeUp .6s .22s ease both;}
+.results-count{font-size:.78rem;color:var(--soft);font-weight:500;}
+.results-count strong{color:var(--text);}
+.active-filters{display:flex;gap:5px;flex-wrap:wrap;}
+.active-tag{display:inline-flex;align-items:center;gap:4px;background:var(--qty-bg);border:1px solid var(--border);border-radius:50px;padding:3px 10px;font-size:.68rem;font-weight:600;color:var(--blue);}
+
+/* ── CARDS GRID ── */
+.empty-state{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--soft);}
+.empty-state .empty-icon{font-size:2.5rem;margin-bottom:12px;}
+.empty-state h3{font-family:'Sora',sans-serif;font-weight:700;font-size:1rem;color:var(--text);margin-bottom:6px;}
+.empty-state p{font-size:.82rem;line-height:1.6;}
+.cards-section{position:relative;z-index:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:13px;padding:0 14px 120px;max-width:1300px;margin:0 auto;}
+.plan-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px 15px 15px;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s,border-color .25s;box-shadow:var(--sh);animation:fadeUp .55s ease both;}
+.plan-card:hover{transform:translateY(-3px);border-color:rgba(64,128,255,.3);box-shadow:0 12px 32px rgba(0,0,0,.14);}
+.plan-card.featured{border:2px solid var(--orange);}
+[data-theme="light"] .plan-card.featured{background:linear-gradient(160deg,#fffaf7,#fff);}
+[data-theme="dark"]  .plan-card.featured{background:linear-gradient(160deg,#261A10,#1A2235);}
+.card-top-badges{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;min-height:20px;gap:6px;}
+.cat-badge{display:inline-flex;align-items:center;border-radius:50px;padding:2px 8px;font-size:.55rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;flex-shrink:1;min-width:0;}
+.destaque-badge{background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff;font-size:.58rem;font-weight:700;padding:3px 8px;border-radius:50px;letter-spacing:.8px;white-space:nowrap;flex-shrink:0;}
+.cat-badge.movel{background:#EEF4FF;color:#2563EB;}
+.cat-badge.internet{background:#e0f7fa;color:#0891b2;}
+.cat-badge.combo{background:#ede9fe;color:#7c3aed;}
+.cat-badge.imperdivel{background:#fce4ec;color:#c2185b;}
+[data-theme="dark"] .cat-badge.movel{background:#1A2B4A;color:#6A9FFF;}
+[data-theme="dark"] .cat-badge.internet{background:#0A2830;color:#22D3EE;}
+[data-theme="dark"] .cat-badge.combo{background:#1E1535;color:#B48EFF;}
+[data-theme="dark"] .cat-badge.imperdivel{background:#2A0F1A;color:#F472B6;}
+.op-strip{display:flex;align-items:center;gap:8px;margin-bottom:11px;margin-top:4px;}
+.op-logo{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.72rem;flex-shrink:0;line-height:1.1;text-align:center;overflow:hidden;padding:2px;}
+.op-logo.vivo{background:#f0ebff;color:#6610f2;border:1px solid rgba(102,16,242,.2);}
+.op-logo.claro{background:#fff0f0;color:#e61e1e;border:1px solid rgba(230,30,30,.2);font-size:.58rem;}
+[data-theme="dark"] .op-logo.vivo{background:#1E1535;color:#B48EFF;border-color:rgba(180,142,255,.2);}
+[data-theme="dark"] .op-logo.claro{background:#2A0F0F;color:#FF6666;border-color:rgba(255,102,102,.2);}
+.op-name{font-size:.68rem;color:var(--soft);font-weight:500;}
+.plan-name{font-family:'Sora',sans-serif;font-weight:700;font-size:.88rem;color:var(--text);line-height:1.25;}
+.gb-display{text-align:center;padding:11px 0 9px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:0 -2px 11px;background:var(--gb-bg);border-radius:8px;}
+.gb-number{font-family:'Sora',sans-serif;font-weight:800;font-size:2.2rem;line-height:1;background:linear-gradient(135deg,var(--blue),#60A5FA);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.gb-label{font-size:.68rem;color:var(--soft);margin-top:2px;font-weight:500;}
+[data-theme="light"] .plan-card.cat-imperdivel-card .gb-display{background:linear-gradient(135deg,#fce4ec,#fff0f4);}
+[data-theme="dark"]  .plan-card.cat-imperdivel-card .gb-display{background:linear-gradient(135deg,#2A0F1A,#1A0F14);}
+.plan-card.cat-imperdivel-card .gb-number{background:linear-gradient(135deg,#c2185b,#e91e63);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+[data-theme="light"] .plan-card.cat-combo-card .gb-display{background:linear-gradient(135deg,#ede9fe,#f5f3ff);}
+[data-theme="dark"]  .plan-card.cat-combo-card .gb-display{background:linear-gradient(135deg,#1E1535,#160F28);}
+.plan-card.cat-combo-card .gb-number{background:linear-gradient(135deg,#7c3aed,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.features{list-style:none;margin-bottom:13px;display:flex;flex-direction:column;gap:5px;}
+.features li{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--soft);}
+.features li::before{content:'✓';width:15px;height:15px;border-radius:50%;background:var(--qty-bg);display:flex;align-items:center;justify-content:center;font-size:.56rem;color:var(--blue);font-weight:700;flex-shrink:0;}
+.features li.highlight{color:var(--text);font-weight:600;}
+.features li.highlight::before{background:var(--total-bg);color:var(--orange);}
+.price-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px;}
+.price{font-family:'Sora',sans-serif;font-weight:800;font-size:1.55rem;color:var(--text);}
+.price-label{font-size:.62rem;color:var(--soft);margin-left:2px;}
+.price-period{font-size:.68rem;color:var(--soft);}
+.btn-contratar{width:100%;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border:none;border-radius:9px;padding:12px;font-size:.86rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:transform .2s,box-shadow .2s;box-shadow:0 3px 10px rgba(37,99,235,.22);}
+.btn-contratar:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(37,99,235,.3);}
+.plan-card.featured .btn-contratar{background:linear-gradient(135deg,var(--orange),var(--orange2));box-shadow:0 3px 10px rgba(255,107,26,.28);}
+.plan-card.featured .btn-contratar:hover{box-shadow:0 6px 18px rgba(255,107,26,.4);}
+.plan-card.cat-imperdivel-card:not(.featured) .btn-contratar{background:linear-gradient(135deg,#c2185b,#e91e63);box-shadow:0 3px 10px rgba(194,24,91,.28);}
+.plan-card.cat-combo-card .btn-contratar{background:linear-gradient(135deg,#7c3aed,#a78bfa);box-shadow:0 3px 10px rgba(124,58,237,.28);}
+
+/* ── PLAN MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:300;background:var(--modal-over);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal-sheet{background:var(--modal-bg);border-radius:22px 22px 0 0;width:100%;max-width:480px;max-height:94vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;position:relative;animation:slideUp .3s cubic-bezier(.32,.72,0,1);box-shadow:0 -8px 40px rgba(0,0,0,.28);padding:0 0 env(safe-area-inset-bottom,16px);}
+.drag-handle{width:36px;height:4px;border-radius:2px;background:var(--border);margin:12px auto 0;}
+.modal-close{position:absolute;top:14px;right:14px;z-index:10;background:var(--qty-bg);border:1px solid var(--border);color:var(--soft);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:all .18s;}
+.modal-close:hover{background:var(--border);color:var(--text);}
+.modal-body{padding:10px 18px 20px;}
+.modal-badge{font-size:.66rem;font-weight:700;letter-spacing:.9px;margin-bottom:3px;}
+.modal-body h2{font-family:'Sora',sans-serif;font-weight:800;font-size:1.15rem;margin-bottom:2px;color:var(--text);}
+.modal-sub{color:var(--soft);font-size:.78rem;margin-bottom:10px;}
+.modal-features{list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+.modal-features li{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--soft);}
+.modal-features li span.icon{width:24px;height:24px;border-radius:6px;background:var(--qty-bg);display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;}
+.modal-price-block{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 13px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.modal-price{font-family:'Sora',sans-serif;font-weight:800;font-size:1.6rem;color:var(--text);}
+.modal-price-note{font-size:.72rem;color:var(--soft);text-align:right;line-height:1.6;}
+.modal-tabs{display:flex;gap:7px;margin-bottom:11px;}
+.mtab{flex:1;border:none;border-radius:9px;padding:10px 6px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .2s;}
+.mtab.cadastro{background:var(--qty-bg);border:1px solid var(--border);color:var(--blue);}
+.mtab.cadastro.active,.mtab.cadastro:hover{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border-color:transparent;box-shadow:0 3px 10px rgba(37,99,235,.26);}
+.mtab.whatsapp{background:#F0FBF4;border:1px solid #A7E8C0;color:#1a9e4a;}
+[data-theme="dark"] .mtab.whatsapp{background:#0A1F10;border-color:#1A5A28;color:#4ADE80;}
+.mtab.whatsapp.active,.mtab.whatsapp:hover{background:var(--wa);color:#fff;border-color:transparent;box-shadow:0 3px 10px rgba(37,211,102,.3);}
+.mtab svg{width:14px;height:14px;fill:currentColor;flex-shrink:0;}
+.panel{display:none;}.panel.active{display:block;}
+.modal-form{display:flex;flex-direction:column;gap:8px;}
+.f-group{display:flex;flex-direction:column;gap:3px;}
+.f-label{font-size:.72rem;font-weight:600;color:var(--soft);}
+.modal-form input{background:var(--input-bg);border:1.5px solid var(--border);border-radius:10px;padding:13px 14px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s,box-shadow .2s;width:100%;-webkit-appearance:none;appearance:none;}
+.modal-form input::placeholder{color:var(--soft);}
+.modal-form input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1);background:var(--input-focus);}
+.form-qty-row{display:flex;align-items:center;background:var(--qty-bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;gap:8px;}
+.form-qty-row .fq-label{flex:1;font-size:.82rem;color:var(--soft);}
+.fq-btn{width:28px;height:28px;border-radius:6px;background:var(--white);border:1px solid var(--border);color:var(--blue);font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .16s;}
+.fq-btn:hover{background:var(--blue);color:#fff;}
+.fq-val{font-family:'Sora',sans-serif;font-weight:800;font-size:1rem;color:var(--text);min-width:22px;text-align:center;}
+.form-total-row{display:flex;align-items:center;justify-content:space-between;background:var(--total-bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;}
+.form-total-label{font-size:.8rem;color:var(--soft);}
+.form-total-value{font-family:'Sora',sans-serif;font-weight:800;font-size:1.15rem;color:var(--orange);}
+.form-hint{font-size:.7rem;color:var(--soft);text-align:center;}
+.modal-btn{width:100%;border:none;border-radius:10px;padding:14px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff;box-shadow:0 4px 14px rgba(255,107,26,.28);transition:transform .2s,box-shadow .2s;margin-top:2px;}
+.modal-btn:hover{transform:translateY(-2px);box-shadow:0 7px 20px rgba(255,107,26,.4);}
+.modal-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;}
+.form-error{background:#FFF0F0;border:1px solid #FFBCBC;border-radius:8px;padding:9px 12px;font-size:.78rem;color:#cc0000;display:none;text-align:center;}
+[data-theme="dark"] .form-error{background:#2A0F0F;border-color:#663333;}
+.form-error.show{display:block;}
+
+/* ── SUCCESS SCREEN ── */
+.success-screen{display:none;text-align:center;padding:14px 0 4px;}
+.success-screen.show{display:block;}
+.success-icon{font-size:2.6rem;margin-bottom:10px;}
+.success-screen h3{font-family:'Sora',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:5px;color:var(--text);}
+.success-screen p{color:var(--soft);font-size:.82rem;line-height:1.7;}
+.success-email-badge{display:inline-flex;align-items:center;gap:6px;background:var(--qty-bg);border:1px solid var(--border);border-radius:50px;padding:6px 14px;font-size:.75rem;font-weight:600;color:var(--blue);margin-top:10px;}
+.success-actions{display:flex;flex-direction:column;gap:9px;margin-top:16px;}
+.btn-continue{width:100%;border:2px solid var(--blue);border-radius:10px;padding:12px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;background:transparent;color:var(--blue);transition:all .2s;}
+.btn-continue:hover{background:var(--qty-bg);}
+.btn-view-cart{width:100%;border:none;border-radius:10px;padding:12px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff;box-shadow:0 3px 10px rgba(255,107,26,.25);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px;}
+.btn-view-cart:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(255,107,26,.38);}
+.cart-badge-il{background:rgba(255,255,255,.28);border-radius:50px;padding:1px 8px;font-size:.74rem;font-weight:800;}
+
+/* ── WA PANEL ── */
+.wa-panel{text-align:center;padding:4px 0 2px;}
+.wa-icon-big{width:52px;height:52px;border-radius:50%;background:#F0FBF4;border:2px solid #A7E8C0;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:1.5rem;}
+[data-theme="dark"] .wa-icon-big{background:#0A1F10;border-color:#1A5A28;}
+.wa-panel h3{font-family:'Sora',sans-serif;font-weight:700;font-size:.96rem;margin-bottom:5px;color:var(--text);}
+.wa-panel p{color:var(--soft);font-size:.8rem;margin-bottom:12px;line-height:1.6;}
+.wa-qty-summary{background:#F0FBF4;border:1px solid #A7E8C0;border-radius:10px;padding:9px 13px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+[data-theme="dark"] .wa-qty-summary{background:#0A1F10;border-color:#1A5A28;}
+.wa-qty-summary-left{text-align:left;}
+.wa-qty-summary-left span{font-size:.74rem;color:var(--soft);}
+.wa-qty-summary-left strong{display:block;font-family:'Sora',sans-serif;font-size:.82rem;color:var(--text);font-weight:700;margin-top:1px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.wa-qty-summary-right{text-align:right;flex-shrink:0;}
+.wa-qty-summary-right span{font-size:.74rem;color:var(--soft);}
+.wa-qty-summary-right strong{display:block;font-family:'Sora',sans-serif;font-size:1.1rem;color:var(--orange);font-weight:800;}
+.wa-qty-mini{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;}
+.wa-qty-mini-btn{width:32px;height:32px;border-radius:8px;background:#F0FBF4;border:1px solid #A7E8C0;color:#1a9e4a;font-size:1.1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .16s;}
+[data-theme="dark"] .wa-qty-mini-btn{background:#0A1F10;border-color:#1A5A28;color:#4ADE80;}
+.wa-qty-mini-btn:hover{background:var(--wa);color:#fff;}
+.wa-qty-mini-val{font-family:'Sora',sans-serif;font-weight:800;font-size:1.1rem;min-width:32px;text-align:center;color:var(--text);}
+.wa-qty-mini-label{font-size:.76rem;color:var(--soft);}
+.wa-btn-big{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--wa);color:#fff;border:none;border-radius:11px;padding:14px;font-size:.92rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;width:100%;text-decoration:none;box-shadow:0 4px 16px rgba(37,211,102,.3);transition:transform .2s,box-shadow .2s;}
+.wa-btn-big:hover{transform:translateY(-2px);box-shadow:0 7px 22px rgba(37,211,102,.44);}
+.wa-btn-big svg{width:19px;height:19px;fill:#fff;}
+.wa-note{font-size:.7rem;color:var(--soft);margin-top:8px;}
+
+/* ── CART BAR (fixed bottom) ── */
+.cart-bar{
+  position:fixed;bottom:0;left:0;right:0;z-index:200;
+  background:linear-gradient(135deg,var(--orange),var(--orange2));
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));
+  display:none;
+  animation:slideUpEl .35s cubic-bezier(.32,.72,0,1);
+  box-shadow:0 -3px 18px rgba(255,107,26,.35);
+}
+.cart-bar.show{display:block;}
+.cart-bar-inner{display:flex;align-items:center;justify-content:space-between;gap:10px;max-width:600px;margin:0 auto;}
+.cart-bar-left{display:flex;align-items:center;gap:10px;min-width:0;}
+.cart-bar-ico{font-size:1.3rem;line-height:1;flex-shrink:0;}
+.cart-bar-info{min-width:0;}
+.cart-bar-count{font-size:.7rem;color:rgba(255,255,255,.85);font-weight:600;white-space:nowrap;}
+.cart-bar-total{font-family:'Sora',sans-serif;font-weight:800;font-size:1rem;color:#fff;white-space:nowrap;}
+.cart-bar-btn{background:rgba(255,255,255,.22);border:1.5px solid rgba(255,255,255,.5);color:#fff;border-radius:50px;padding:9px 16px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap;flex-shrink:0;transition:all .2s;}
+.cart-bar-btn:hover{background:rgba(255,255,255,.38);}
+@keyframes slideUpEl{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CART VIEW OVERLAY ── */
+.cart-overlay{display:none;position:fixed;inset:0;z-index:310;background:var(--modal-over);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;}
+.cart-overlay.open{display:flex;}
+.cart-sheet{background:var(--modal-bg);border-radius:22px 22px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;position:relative;animation:slideUp .3s cubic-bezier(.32,.72,0,1);box-shadow:0 -8px 40px rgba(0,0,0,.28);padding:0 0 env(safe-area-inset-bottom,20px);}
+.cart-body{padding:14px 18px 20px;}
+.cart-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.cart-header-row h2{font-family:'Sora',sans-serif;font-weight:800;font-size:1.1rem;color:var(--text);}
+.cart-close-btn{background:var(--qty-bg);border:1px solid var(--border);color:var(--soft);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:all .18s;flex-shrink:0;}
+.cart-close-btn:hover{background:var(--border);color:var(--text);}
+.cart-item{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:8px;display:flex;align-items:center;gap:9px;}
+.cart-item-info{flex:1;min-width:0;}
+.cart-item-name{font-size:.82rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cart-item-meta{font-size:.7rem;color:var(--soft);margin-top:2px;}
+.cart-item-total{font-family:'Sora',sans-serif;font-weight:800;font-size:.92rem;color:var(--orange);flex-shrink:0;}
+.cart-rm{background:none;border:none;color:var(--soft);cursor:pointer;padding:4px 5px;border-radius:6px;font-size:.78rem;transition:all .15s;flex-shrink:0;}
+.cart-rm:hover{background:#fce4ec;color:#c2185b;}
+.cart-totals{background:var(--qty-bg);border:1px solid var(--border);border-radius:12px;padding:11px 13px;margin:12px 0;}
+.cart-total-row{display:flex;justify-content:space-between;font-size:.8rem;color:var(--soft);padding:3px 0;}
+.cart-total-row.grand{font-size:1rem;font-weight:800;color:var(--text);padding-top:9px;margin-top:7px;border-top:1px solid var(--border);}
+.cart-total-row.grand .cv{color:var(--orange);font-family:'Sora',sans-serif;}
+.cart-finalize{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;border:none;border-radius:11px;padding:13px;
+  font-size:.92rem;font-weight:700;cursor:pointer;
+  font-family:'Outfit',sans-serif;
+  background:linear-gradient(135deg,var(--orange),var(--orange2));
+  color:#fff;
+  text-decoration:none;
+  box-shadow:0 4px 16px rgba(255,107,26,.28);
+  transition:transform .2s,box-shadow .2s;
+  margin-bottom:9px;
+}
+.cart-finalize:hover{transform:translateY(-2px);box-shadow:0 7px 22px rgba(255,107,26,.4);}
+.cart-finalize:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.cart-clear{width:100%;border:1px solid var(--border);border-radius:10px;padding:11px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;background:transparent;color:var(--soft);transition:all .2s;}
+.cart-clear:hover{border-color:#c2185b;color:#c2185b;background:#fce4ec;}
+[data-theme="dark"] .cart-clear:hover{background:#2A0F1A;}
+.cart-empty{text-align:center;padding:40px 16px;color:var(--soft);}
+.cart-empty .ei{font-size:2.2rem;margin-bottom:8px;}
+.cart-empty p{font-size:.84rem;}
+.cart-finalize-success{
+  background:var(--qty-bg);border:1.5px solid var(--border);border-radius:11px;
+  padding:14px 16px;margin-bottom:9px;text-align:center;
+  display:none;
+}
+.cart-finalize-success.show{display:block;}
+.cart-finalize-success .cfs-icon{font-size:1.8rem;margin-bottom:6px;}
+.cart-finalize-success h4{font-family:'Sora',sans-serif;font-weight:800;font-size:.96rem;color:var(--text);margin-bottom:4px;}
+.cart-finalize-success p{font-size:.78rem;color:var(--soft);line-height:1.6;}
+
+/* ── FOOTER ── */
+.footer-strip{position:relative;z-index:1;background:var(--white);border-top:1px solid var(--border);text-align:center;padding:16px 20px;color:var(--soft);font-size:.74rem;line-height:1.7;}
+.footer-strip strong{color:var(--text);}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── DESKTOP ── */
+@media(min-width:769px){
+  .hero{padding:72px 5vw 36px;}
+  .hero h1{font-size:clamp(2rem,5vw,3.2rem);}
+  .trust-bar{flex-wrap:wrap;overflow-x:visible;justify-content:center;padding:0 5vw 28px;gap:9px;}
+  .filters-wrapper{padding:0 5vw 6px;}
+  .filter-bar{flex-wrap:wrap;overflow-x:visible;gap:8px;}
+  .results-bar{padding:0 5vw 16px;}
+  .cards-section{padding:0 5vw 120px;}
+  .modal-overlay,.cart-overlay{align-items:flex-start;padding-top:40px;}
+  .modal-sheet,.cart-sheet{border-radius:22px;max-width:500px;max-height:calc(100vh - 80px);}
+  .drag-handle{display:none;}
+  .cart-bar{padding:14px 5vw;}
+}
+</style>
+</head>
+<body>
+
+<!-- THEME TOGGLE -->
+<button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar modo">
+  <span class="theme-toggle-icon"></span>
+  <span class="theme-lbl" id="themeLabel">Modo escuro</span>
+</button>
+
+<!-- HERO -->
+<section class="hero">
+  <a class="hero-wa" href="https://wa.me/552740422220" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    Fale conosco
+  </a>
+  <h1>Encontre o plano <em>ideal</em><br>para você</h1>
+</section>
+
+<div class="trust-bar">
+  <div class="trust-item">🔒 100% seguro</div>
+  <div class="trust-item">📞 Suporte WhatsApp</div>
+</div>
+
+<div class="filters-wrapper">
+  <div class="filter-group-label">Operadora</div>
+  <div class="filter-bar" id="opFilterBar">
+    <button class="filter-btn active"  onclick="setOpFilter('all',this)"><span class="op-dot dot-all"></span>Todas</button>
+    <button class="filter-btn vivo"    onclick="setOpFilter('vivo',this)"><span class="op-dot dot-vivo"></span>Vivo</button>
+    <button class="filter-btn claro"   onclick="setOpFilter('claro',this)"><span class="op-dot dot-claro"></span>Claro</button>
+  </div>
+  <div class="filter-group-label">Categoria</div>
+  <div class="filter-bar" id="catFilterBar">
+    <button class="filter-btn active"          onclick="setCatFilter('all',this)">📋 Todos os planos</button>
+    <button class="filter-btn cat-imperdivel"  onclick="setCatFilter('imperdivel',this)">🔥 Ofertas Imperdíveis</button>
+    <button class="filter-btn cat-movel"       onclick="setCatFilter('movel',this)">📱 Móvel</button>
+    <button class="filter-btn cat-internet"    onclick="setCatFilter('internet',this)">🌐 Banda Larga</button>
+    <button class="filter-btn cat-combo"       onclick="setCatFilter('combo',this)">📦 Combos</button>
+  </div>
+</div>
+
+<div class="results-bar">
+  <div class="results-count" id="resultsCount"></div>
+  <div class="active-filters" id="activeTags"></div>
+</div>
+
+<div class="cards-section" id="cardsGrid"></div>
+
+<!-- PLAN MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-sheet" id="modalSheet">
+    <div class="drag-handle"></div>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-body">
+      <div class="modal-badge" id="mBadge"></div>
+      <h2 id="mTitle"></h2>
+      <p class="modal-sub" id="mSub"></p>
+      <ul class="modal-features" id="mFeatures"></ul>
+      <div class="modal-price-block">
+        <div>
+          <div class="modal-price" id="mPrice"></div>
+          <div style="font-size:.68rem;color:var(--soft);margin-top:1px;">por unidade / mês</div>
+        </div>
+        <div class="modal-price-note" id="mNote"></div>
+      </div>
+      <div class="modal-tabs">
+        <button class="mtab cadastro active" onclick="switchTab('cadastro')" type="button">📋 Cadastro</button>
+        <button class="mtab whatsapp" onclick="switchTab('whatsapp')" type="button">
+          <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          WhatsApp
+        </button>
+      </div>
+
+      <!-- CADASTRO PANEL -->
+      <div class="panel active" id="panel-cadastro">
+        <div id="formArea">
+          <div class="modal-form">
+            <div class="f-group"><label class="f-label" for="fNome">Razão Social *</label><input type="text" id="fNome" placeholder="Ex: Empresa Ltda." autocomplete="organization"/></div>
+            <div class="f-group"><label class="f-label" for="fTel">WhatsApp *</label><input type="tel" id="fTel" placeholder="(27) 99999-9999" autocomplete="tel"/></div>
+            <div class="f-group"><label class="f-label" for="fCpf">CNPJ</label><input type="text" id="fCpf" placeholder="00.000.000/0000-00" inputmode="numeric"/></div>
+            <div class="f-group"><label class="f-label" for="fEmail">E-mail <span style="color:var(--blue);font-weight:700;">(para receber a proposta)</span></label><input type="email" id="fEmail" placeholder="seu@email.com" autocomplete="email"/></div>
+            <input type="hidden" id="qtyInput" value="1"/>
+            <span id="qtyUnitText" style="display:none"></span>
+            <span id="qtyTotal" style="display:none"></span>
+            <div class="form-qty-row">
+              <span class="fq-label">📦 Quantidade:</span>
+              <button class="fq-btn" onclick="changeQty(-1)" type="button">−</button>
+              <span class="fq-val" id="fqVal">1</span>
+              <button class="fq-btn" onclick="changeQty(+1)" type="button">+</button>
+              <span style="font-size:.74rem;color:var(--soft);">linha(s)</span>
+            </div>
+            <div class="form-total-row"><span class="form-total-label">💰 Total / mês:</span><span class="form-total-value" id="fTotal">R$ 0,00</span></div>
+            <p class="form-hint">🔒 Dados usados apenas para ativação do plano.</p>
+            <div class="form-error" id="formError">Por favor, preencha nome e WhatsApp.</div>
+            <button class="modal-btn" id="submitBtn" onclick="submitForm()" type="button">✅ Confirmar contratação</button>
+          </div>
+        </div>
+        <!-- SUCCESS -->
+        <div class="success-screen" id="successScreen">
+          <div class="success-icon">🎉</div>
+          <h3>Solicitação enviada!</h3>
+          <p>Um especialista da <strong>Fatura Expert</strong> entrará em contato pelo WhatsApp em instantes para concluir a ativação.</p>
+          <div id="successEmailMsg"></div>
+          <div class="success-actions">
+            <button class="btn-continue" onclick="continueShopping()" type="button">+ Continuar comprando</button>
+            <button class="btn-view-cart" onclick="openCartView()" type="button">
+              🛒 Ver carrinho <span class="cart-badge-il" id="cartBadgeIl">1</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- WHATSAPP PANEL -->
+      <div class="panel" id="panel-whatsapp">
+        <div class="wa-panel">
+          <div class="wa-icon-big">💬</div>
+          <h3>Fale com um especialista</h3>
+          <p>Prefere tirar dúvidas antes de contratar? Nossa equipe atende agora mesmo.</p>
+          <div class="wa-qty-summary">
+            <div class="wa-qty-summary-left"><span>Plano selecionado</span><strong id="waSumName">—</strong></div>
+            <div class="wa-qty-summary-right"><span id="waSumQtyLabel">1 linha</span><strong id="waSumTotal">R$ 0,00</strong></div>
+          </div>
+          <div class="wa-qty-mini">
+            <button class="wa-qty-mini-btn" onclick="changeQty(-1)" type="button">−</button>
+            <span class="wa-qty-mini-val" id="waMiniVal">1</span>
+            <button class="wa-qty-mini-btn" onclick="changeQty(+1)" type="button">+</button>
+            <span class="wa-qty-mini-label">qtd. de linhas</span>
+          </div>
+          <a class="wa-btn-big" id="waLink" href="https://wa.me/552740422220" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Chamar no WhatsApp agora
+          </a>
+          <p class="wa-note">📞 (27) 4042-2220 · Seg–Sáb 8h–20h</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CART BAR -->
+<div class="cart-bar" id="cartBar">
+  <div class="cart-bar-inner">
+    <div class="cart-bar-left">
+      <span class="cart-bar-ico">🛒</span>
+      <div class="cart-bar-info">
+        <div class="cart-bar-count" id="cartBarCount">0 plano(s)</div>
+        <div class="cart-bar-total" id="cartBarTotal">R$ 0,00/mês</div>
+      </div>
+    </div>
+    <button class="cart-bar-btn" onclick="openCartView()">Ver carrinho →</button>
+  </div>
+</div>
+
+<!-- CART VIEW OVERLAY -->
+<div class="cart-overlay" id="cartOverlay">
+  <div class="cart-sheet">
+    <div class="drag-handle"></div>
+    <div class="cart-body">
+      <div class="cart-header-row">
+        <h2>🛒 Carrinho</h2>
+        <button class="cart-close-btn" onclick="closeCartView()">✕</button>
+      </div>
+      <div id="cartItemsList"></div>
+      <div id="cartTotalsEl" class="cart-totals" style="display:none">
+        <div class="cart-total-row"><span>Planos distintos</span><span id="cvPlans">—</span></div>
+        <div class="cart-total-row"><span>Total de linhas</span><span id="cvLines">—</span></div>
+        <div class="cart-total-row grand"><span>Total / mês</span><span class="cv" id="cvGrand">—</span></div>
+      </div>
+      <button class="cart-finalize" id="cartFinalizeBtn" onclick="finalizeCart()" type="button" style="display:none">
+        ✅ Finalizar pedido
+      </button>
+      <div class="cart-finalize-success" id="cartFinalizeSuccess">
+        <div class="cfs-icon">📩</div>
+        <h4>Pedido recebido!</h4>
+        <p>Sua proposta foi registrada com sucesso.<br>Em breve nossa equipe entrará em contato para concluir a ativação.</p>
+      </div>
+      <button class="cart-clear" id="cartClearBtn" onclick="clearCart()" style="display:none">🗑 Limpar carrinho</button>
+    </div>
+  </div>
+</div>
+
+<footer class="footer-strip">
+  <strong>Fatura Expert</strong> · Cachoeiro de Itapemirim – ES<br>
+  © 2025 Fatura Expert. Todos os direitos reservados. Preços sujeitos a alteração.
+</footer>
+
+<!-- scripts movidos para o final: não bloqueiam o render do HTML/CSS acima -->
+<script src="plans-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+/* ═══════════════════════ DARK MODE ═══════════════════════ */
+function toggleTheme(){
+  const html=document.documentElement;
+  const next=html.getAttribute('data-theme')==='dark'?'light':'dark';
+  html.setAttribute('data-theme',next);
+  document.getElementById('themeLabel').textContent=next==='dark'?'Modo claro':'Modo escuro';
+  try{ localStorage.setItem('fe-theme',next); }catch(e){}
+}
+(function(){
+  let s='light'; try{ s=localStorage.getItem('fe-theme')||'light'; }catch(e){}
+  document.documentElement.setAttribute('data-theme',s);
+  document.addEventListener('DOMContentLoaded',()=>{
+    const l=document.getElementById('themeLabel');
+    if(l) l.textContent=s==='dark'?'Modo claro':'Modo escuro';
+  });
+})();
+
+/* ═══════════════════════ CONFIG ═══════════════════════ */
+const WA_NUMBER        ='552740422220';
+const LEAD_EMAIL       ='departamento.telecomunicacao@gmail.com';
+const EJS_PUBLIC_KEY   ='giEbge8gQmOO5yl3Q';
+const EJS_SERVICE_ID   ='service_693qijd';
+const EJS_TEMPLATE_ID  ='template_p0r1cyo';
+const EJS_TEMPLATE_LEAD='template_ablvprn';
+(function(){ emailjs.init({ publicKey: EJS_PUBLIC_KEY }); })();
+function fmtBRL(v){ return 'R$ '+v.toFixed(2).replace('.',','); }
+
+/* ═══════════════════════ CART STATE ═══════════════════════ */
+let cart=[];
+let cartContact=null;
+
+function cartGrand(){ return cart.reduce((s,i)=>s+i.priceNum*i.qty,0); }
+function cartLines(){ return cart.reduce((s,i)=>s+i.qty,0); }
+
+function updateCartBar(){
+  const bar=document.getElementById('cartBar');
+  if(!cart.length){ bar.classList.remove('show'); return; }
+  bar.classList.add('show');
+  const n=cart.length, l=cartLines();
+  document.getElementById('cartBarCount').textContent=
+    n+' plano'+(n!==1?'s':'')+' · '+l+' linha'+(l!==1?'s':'');
+  document.getElementById('cartBarTotal').textContent=fmtBRL(cartGrand())+'/mês';
+  document.getElementById('cartBadgeIl').textContent=n;
+}
+
+function renderCartView(){
+  const list=document.getElementById('cartItemsList');
+  const totalsEl=document.getElementById('cartTotalsEl');
+  const finalBtn=document.getElementById('cartFinalizeBtn');
+  const finalSuccess=document.getElementById('cartFinalizeSuccess');
+  const clearBtn=document.getElementById('cartClearBtn');
+  if(!cart.length){
+    list.innerHTML=`<div class="cart-empty"><div class="ei">🛒</div><p>Seu carrinho está vazio.</p></div>`;
+    totalsEl.style.display='none';
+    finalBtn.style.display='none';
+    finalSuccess.classList.remove('show');
+    clearBtn.style.display='none';
+    return;
+  }
+  list.innerHTML=cart.map((item,i)=>`
+    <div class="cart-item">
+      <div class="cart-item-info">
+        <div class="cart-item-name">${item.name}</div>
+        <div class="cart-item-meta">${item.opLabel} · ${item.qty} linha${item.qty>1?'s':''} · ${fmtBRL(item.priceNum)}/unid.</div>
+      </div>
+      <div class="cart-item-total">${fmtBRL(item.priceNum*item.qty)}</div>
+      <button class="cart-rm" onclick="removeItem(${i})" title="Remover">✕</button>
+    </div>`).join('');
+  const n=cart.length, l=cartLines();
+  document.getElementById('cvPlans').textContent=n+' plano'+(n!==1?'s':'');
+  document.getElementById('cvLines').textContent=l+' linha'+(l!==1?'s':'');
+  document.getElementById('cvGrand').textContent=fmtBRL(cartGrand());
+  totalsEl.style.display='block';
+  finalBtn.style.display='flex';
+  finalSuccess.classList.remove('show');
+  clearBtn.style.display='block';
+}
+
+function openCartView(){
+  renderCartView();
+  document.getElementById('cartOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  document.querySelector('.theme-toggle').classList.add('hidden');
+}
+function closeCartView(){
+  document.getElementById('cartOverlay').classList.remove('open');
+  document.body.style.overflow='';
+  document.querySelector('.theme-toggle').classList.remove('hidden');
+}
+function removeItem(idx){ cart.splice(idx,1); updateCartBar(); renderCartView(); }
+function clearCart(){
+  if(!confirm('Limpar todos os itens do carrinho?')) return;
+  cart=[]; updateCartBar(); renderCartView();
+}
+function continueShopping(){ closeModal(); }
+
+/* ═══════════════════════ FINALIZE CART ═══════════════════════ */
+async function finalizeCart(){
+  const btn=document.getElementById('cartFinalizeBtn');
+  btn.disabled=true;
+  btn.textContent='⏳ Enviando...';
+  const c=cartContact||{};
+  const grand=cartGrand();
+  if(c.email) await sendConsolidatedProposal(c, grand);
+  await sendConsolidatedLead(c, grand);
+  btn.style.display='none';
+  document.getElementById('cartFinalizeSuccess').classList.add('show');
+}
+
+async function sendConsolidatedProposal(c, grand){
+  if(!c.email) return;
+  try{
+    await emailjs.send(EJS_SERVICE_ID, EJS_TEMPLATE_ID, {
+      to_email: c.email,
+      to_name: c.nome||'Cliente',
+      plano: cart.length===1?cart[0].name:`${cart.length} planos solicitados`,
+      qty: String(cartLines()),
+      total: fmtBRL(grand),
+      proposal_html: buildConsolidatedProposalHTML(c, grand)
+    });
+  }catch(e){ console.warn('proposal:', e); }
+}
+
+async function sendConsolidatedLead(c, grand){
+  try{
+    await emailjs.send(EJS_SERVICE_ID, EJS_TEMPLATE_LEAD, {
+      to_email: LEAD_EMAIL,
+      to_name: 'Equipe Fatura Expert',
+      lead_html: buildConsolidatedLeadHTML(c, grand)
+    });
+  }catch(e){ console.warn('lead:', e); }
+}
+
+/* ═══════════════════════ EMAIL BUILDERS ═══════════════════════ */
+function buildProposalHTML(d){
+  const today=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const ps=parseFloat(d.precoNum).toFixed(2).replace('.',',');
+  const ts=parseFloat(d.totalNum).toFixed(2).replace('.',',');
+  const cnpj=d.cpf?d.cpf:'—';
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Inter,Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;}.wrapper{max-width:680px;margin:0 auto;background:#fff;}.top-border{height:5px;background:linear-gradient(90deg,#00AEEF,#0078C8);}.header{padding:28px 36px 22px;border-bottom:1px solid #eaeef5;display:flex;align-items:center;justify-content:space-between;gap:20px;}.logo-brand{font-size:24px;font-weight:900;}.logo-brand .fatura{color:#00AEEF;}.logo-brand .expert{color:#1a1a2e;}.logo-tag{font-size:9px;font-weight:600;color:#8a9ab5;text-transform:uppercase;letter-spacing:1.2px;margin-top:4px;}.header-info{text-align:right;font-size:11.5px;color:#5a6b8a;line-height:1.85;}.header-info strong{color:#1a1a2e;font-weight:700;}.body{padding:32px 36px 28px;}.proposal-title{font-size:26px;font-weight:900;color:#1a1a2e;margin-bottom:14px;}.ac-line{font-size:13px;color:#5a6b8a;margin-bottom:4px;}.ac-line strong{color:#1a1a2e;}.intro-line{font-size:13px;color:#5a6b8a;margin-bottom:26px;}.section-label{font-size:10px;font-weight:700;color:#00AEEF;text-transform:uppercase;letter-spacing:1.3px;margin-bottom:7px;}.desc-box{background:#f8faff;border-left:3px solid #00AEEF;border-radius:0 8px 8px 0;padding:13px 16px;margin-bottom:28px;}.desc-box p{font-size:12.5px;color:#5a6b8a;line-height:1.7;}table{width:100%;border-collapse:collapse;}.table-head tr{background:#f4f7fb;}.table-head th{font-size:10px;font-weight:700;text-transform:uppercase;color:#8a9ab5;padding:11px 14px;text-align:left;border-bottom:2px solid #e2e8f4;}.table-head th.right{text-align:right;}.table-head th.center{text-align:center;}.table-body td{padding:16px 14px;font-size:13px;color:#3a4a6a;border-bottom:1px solid #f0f4fb;vertical-align:top;}.table-body td.center{text-align:center;}.table-body td.right{text-align:right;}.product-name{font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:3px;}.product-sub{font-size:11px;color:#8a9ab5;}.badge-mensal{display:inline-block;background:#e6f7ff;color:#00AEEF;font-size:9.5px;font-weight:700;padding:2px 9px;border-radius:50px;margin-top:5px;}.total-row{background:#f4f7fb;}.total-row td{padding:15px 14px;border-top:2px solid #e2e8f4;}.total-label{font-size:14px;font-weight:800;color:#1a1a2e;}.total-amount{font-size:18px;font-weight:900;color:#00AEEF;text-align:right;}.terms-section{margin-top:24px;margin-bottom:24px;}.terms-box{background:#fafbff;border:1px solid #e8edf8;border-radius:10px;padding:17px 20px;}.terms-box p{font-size:12px;color:#5a6b8a;line-height:1.75;margin-bottom:9px;}.terms-box p:last-child{margin-bottom:0;}.terms-box strong{color:#1a1a2e;font-weight:700;}.signature-section{margin-top:20px;padding-top:18px;border-top:1px dashed #dde4f0;}.signature-name{font-size:13px;font-weight:700;color:#1a1a2e;}.signature-role{font-size:11px;color:#8a9ab5;margin-top:2px;}.footer-bar{background:linear-gradient(90deg,#00AEEF,#0078C8);padding:14px 36px;display:flex;align-items:center;justify-content:space-between;}.footer-bar p{color:rgba(255,255,255,.85);font-size:10.5px;}.footer-bar p strong{color:#fff;}.bottom-border{height:3px;background:linear-gradient(90deg,#FF6B1A,#FF8C45);}</style></head><body><div class="wrapper"><div class="top-border"></div><div class="header"><div><div class="logo-brand"><span class="fatura">Fatura</span> <span class="expert">expert</span></div><div class="logo-tag">Gestão de Contas Telefônicas</div></div><div class="header-info"><strong>Fatura Expert</strong><br>CNPJ: 15.383.280/0001-31<br>(27) 99672-2220 / (27) 4042-2220<br>www.faturaexpert.com.br</div></div><div class="body"><h1 class="proposal-title">Proposta comercial</h1><p class="ac-line"><strong>A/C:</strong> ${d.nome}${cnpj!=='—'?' &nbsp;|&nbsp; <strong>CNPJ:</strong> '+cnpj:''} &nbsp;|&nbsp; <strong>Data:</strong> ${today}</p><p class="intro-line">Segue abaixo as condições comerciais detalhadas para avaliação:</p><div class="section-label">Descrição</div><div class="desc-box"><p>Com nossa consultoria especializada, realizamos uma análise personalizada do perfil de uso da sua empresa e, a partir disso, selecionamos as melhores opções disponíveis no mercado, sempre alinhadas às necessidades reais e específicas do seu negócio.</p></div><table><thead class="table-head"><tr><th>Produto ou Serviço</th><th class="center">Qtd.</th><th class="center">Preço</th><th class="right">Sub-total</th></tr></thead><tbody class="table-body"><tr><td><div class="product-name">${d.plano}</div><div class="product-sub">por linha contratada</div><div class="badge-mensal">Mensal</div></td><td class="center">${d.qty}</td><td class="center">R$&nbsp;${ps}</td><td class="right"><strong>R$&nbsp;${ts}</strong></td></tr></tbody><tfoot><tr class="total-row"><td colspan="3" class="total-label">Valor total do pedido</td><td class="total-amount">R$&nbsp;${ts}</td></tr></tfoot></table><div class="terms-section"><div class="terms-box"><p><strong>Serviços Avulso:</strong> 50% de entrada + 50% no término do serviço. Garantia de 3 meses.</p><p><strong>Serviços Mensais:</strong> Você terá um consultor exclusivo para atender suas demandas de telecom 24h por dia, com gestão completa de contas, auditoria contínua, contestação de faturas, trocas e controle de chips, acesso ilimitado ao portal Fatura Expert, atendimento com analista especializado, gestão de contas de todas as operadoras, acompanhamento de protocolos, renegociação de planos, emissão de relatórios gerenciais, suporte em portabilidades, controle de consumo e acompanhamento estratégico contínuo.</p><p><strong>Cliente já cadastrado como cliente mensal fica isento de cobrança Expert por demanda.</strong></p></div></div><div class="signature-section"><div class="signature-name">Hely Mendonça</div><div class="signature-role">Consultor Especializado · Fatura Expert</div></div></div><div class="footer-bar"><p>© ${new Date().getFullYear()} <strong>Fatura Expert</strong> · Cachoeiro de Itapemirim – ES</p><p><strong>(27) 4042-2220</strong> · Seg–Sáb 8h–20h</p></div><div class="bottom-border"></div></div></body></html>`;
+}
+
+function buildLeadHTML(d){
+  const today=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const ps=parseFloat(d.precoNum).toFixed(2).replace('.',',');
+  const ts=parseFloat(d.totalNum).toFixed(2).replace('.',',');
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Inter,Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;}.wrapper{max-width:620px;margin:0 auto;background:#fff;}.top-border{height:5px;background:linear-gradient(90deg,#FF6B1A,#FF8C45);}.header{padding:24px 32px 20px;border-bottom:1px solid #eaeef5;display:flex;align-items:center;justify-content:space-between;gap:16px;}.logo-brand{font-size:22px;font-weight:900;}.logo-brand .fatura{color:#00AEEF;}.logo-brand .expert{color:#1a1a2e;}.logo-tag{font-size:9px;font-weight:600;color:#8a9ab5;text-transform:uppercase;letter-spacing:1.2px;margin-top:3px;}.header-badge{background:linear-gradient(135deg,#FF6B1A,#FF8C45);color:#fff;font-size:11px;font-weight:800;padding:6px 14px;border-radius:50px;white-space:nowrap;}.body{padding:28px 32px 24px;}.alert-title{font-size:20px;font-weight:900;color:#1a1a2e;margin-bottom:4px;}.alert-sub{font-size:12.5px;color:#5a6b8a;margin-bottom:22px;}.section-label{font-size:10px;font-weight:700;color:#FF6B1A;text-transform:uppercase;letter-spacing:1.3px;margin-bottom:8px;}.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px;}.info-card{background:#f8faff;border:1px solid #e2e8f4;border-radius:10px;padding:12px 14px;}.info-card.full{grid-column:1/-1;}.info-card .label{font-size:10px;font-weight:700;color:#8a9ab5;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;}.info-card .value{font-size:13.5px;font-weight:700;color:#1a1a2e;}.info-card .value.blue{color:#2563EB;}.plan-box{background:linear-gradient(135deg,#EEF4FF,#F8FBFF);border:1.5px solid #C7D9FF;border-radius:12px;padding:16px 18px;margin-bottom:22px;}.plan-box .plan-name{font-size:15px;font-weight:800;color:#1a1a2e;margin-bottom:8px;}.plan-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#5a6b8a;padding:5px 0;border-bottom:1px dashed #dde6f5;}.plan-row:last-child{border-bottom:none;padding-bottom:0;}.plan-row strong{color:#1a1a2e;font-weight:700;}.plan-row .total-val{font-size:17px;font-weight:900;color:#FF6B1A;}.footer-bar{background:linear-gradient(90deg,#00AEEF,#0078C8);padding:13px 32px;display:flex;align-items:center;justify-content:space-between;}.footer-bar p{color:rgba(255,255,255,.85);font-size:10.5px;}.footer-bar p strong{color:#fff;}.bottom-border{height:3px;background:linear-gradient(90deg,#FF6B1A,#FF8C45);}</style></head><body><div class="wrapper"><div class="top-border"></div><div class="header"><div><div class="logo-brand"><span class="fatura">Fatura</span> <span class="expert">expert</span></div><div class="logo-tag">Painel Interno · Novo Lead</div></div><div class="header-badge">🔔 NOVO LEAD</div></div><div class="body"><div class="alert-title">Nova solicitação recebida</div><div class="alert-sub">Recebido em ${today} · Contato imediato recomendado</div><div class="section-label">Dados do cliente</div><div class="info-grid"><div class="info-card full"><div class="label">Razão Social</div><div class="value">${d.nome}</div></div><div class="info-card"><div class="label">WhatsApp</div><div class="value blue">${d.tel}</div></div><div class="info-card"><div class="label">E-mail</div><div class="value">${d.email||'—'}</div></div><div class="info-card full"><div class="label">CNPJ</div><div class="value">${d.cpf||'—'}</div></div></div><div class="section-label">Plano solicitado</div><div class="plan-box"><div class="plan-name">${d.plano}</div><div class="plan-row"><span>Preço por unidade</span><strong>R$ ${ps}</strong></div><div class="plan-row"><span>Quantidade</span><strong>${d.qty} linha${parseInt(d.qty)>1?'s':''}</strong></div><div class="plan-row"><span>Total / mês</span><span class="total-val">R$ ${ts}</span></div></div></div><div class="footer-bar"><p>© ${new Date().getFullYear()} <strong>Fatura Expert</strong> · Sistema interno</p><p><strong>(27) 4042-2220</strong></p></div><div class="bottom-border"></div></div></body></html>`;
+}
+
+function buildConsolidatedProposalHTML(c, grand){
+  const today=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const cnpj=c.cpf||'—';
+  const rowsHtml=cart.map(item=>{
+    const sub=fmtBRL(item.priceNum*item.qty);
+    const unit=fmtBRL(item.priceNum);
+    return `<tr><td><div class="product-name">${item.name}</div><div class="product-sub">por linha contratada</div><div class="badge-mensal">Mensal</div></td><td class="center">${item.qty}</td><td class="center">${unit}</td><td class="right"><strong>${sub}</strong></td></tr>`;
+  }).join('');
+  const grandStr=grand.toFixed(2).replace('.',',');
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Inter,Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;}.wrapper{max-width:680px;margin:0 auto;background:#fff;}.top-border{height:5px;background:linear-gradient(90deg,#00AEEF,#0078C8);}.header{padding:28px 36px 22px;border-bottom:1px solid #eaeef5;display:flex;align-items:center;justify-content:space-between;gap:20px;}.logo-brand{font-size:24px;font-weight:900;}.logo-brand .fatura{color:#00AEEF;}.logo-brand .expert{color:#1a1a2e;}.logo-tag{font-size:9px;font-weight:600;color:#8a9ab5;text-transform:uppercase;letter-spacing:1.2px;margin-top:4px;}.header-info{text-align:right;font-size:11.5px;color:#5a6b8a;line-height:1.85;}.header-info strong{color:#1a1a2e;font-weight:700;}.body{padding:32px 36px 28px;}.proposal-title{font-size:26px;font-weight:900;color:#1a1a2e;margin-bottom:14px;}.ac-line{font-size:13px;color:#5a6b8a;margin-bottom:4px;}.ac-line strong{color:#1a1a2e;}.intro-line{font-size:13px;color:#5a6b8a;margin-bottom:26px;}.section-label{font-size:10px;font-weight:700;color:#00AEEF;text-transform:uppercase;letter-spacing:1.3px;margin-bottom:7px;}.desc-box{background:#f8faff;border-left:3px solid #00AEEF;border-radius:0 8px 8px 0;padding:13px 16px;margin-bottom:28px;}.desc-box p{font-size:12.5px;color:#5a6b8a;line-height:1.7;}table{width:100%;border-collapse:collapse;}.table-head tr{background:#f4f7fb;}.table-head th{font-size:10px;font-weight:700;text-transform:uppercase;color:#8a9ab5;padding:11px 14px;text-align:left;border-bottom:2px solid #e2e8f4;}.table-head th.right{text-align:right;}.table-head th.center{text-align:center;}.table-body td{padding:16px 14px;font-size:13px;color:#3a4a6a;border-bottom:1px solid #f0f4fb;vertical-align:top;}.table-body td.center{text-align:center;}.table-body td.right{text-align:right;}.product-name{font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:3px;}.product-sub{font-size:11px;color:#8a9ab5;}.badge-mensal{display:inline-block;background:#e6f7ff;color:#00AEEF;font-size:9.5px;font-weight:700;padding:2px 9px;border-radius:50px;margin-top:5px;}.total-row{background:#f4f7fb;}.total-row td{padding:15px 14px;border-top:2px solid #e2e8f4;}.total-label{font-size:14px;font-weight:800;color:#1a1a2e;}.total-amount{font-size:18px;font-weight:900;color:#00AEEF;text-align:right;}.terms-section{margin-top:24px;margin-bottom:24px;}.terms-box{background:#fafbff;border:1px solid #e8edf8;border-radius:10px;padding:17px 20px;}.terms-box p{font-size:12px;color:#5a6b8a;line-height:1.75;margin-bottom:9px;}.terms-box p:last-child{margin-bottom:0;}.terms-box strong{color:#1a1a2e;font-weight:700;}.signature-section{margin-top:20px;padding-top:18px;border-top:1px dashed #dde4f0;}.signature-name{font-size:13px;font-weight:700;color:#1a1a2e;}.signature-role{font-size:11px;color:#8a9ab5;margin-top:2px;}.footer-bar{background:linear-gradient(90deg,#00AEEF,#0078C8);padding:14px 36px;display:flex;align-items:center;justify-content:space-between;}.footer-bar p{color:rgba(255,255,255,.85);font-size:10.5px;}.footer-bar p strong{color:#fff;}.bottom-border{height:3px;background:linear-gradient(90deg,#FF6B1A,#FF8C45);}</style></head><body><div class="wrapper"><div class="top-border"></div><div class="header"><div><div class="logo-brand"><span class="fatura">Fatura</span> <span class="expert">expert</span></div><div class="logo-tag">Gestão de Contas Telefônicas</div></div><div class="header-info"><strong>Fatura Expert</strong><br>CNPJ: 15.383.280/0001-31<br>(27) 99672-2220 / (27) 4042-2220<br>www.faturaexpert.com.br</div></div><div class="body"><h1 class="proposal-title">Proposta comercial</h1><p class="ac-line"><strong>A/C:</strong> ${c.nome||'—'}${cnpj!=='—'?' &nbsp;|&nbsp; <strong>CNPJ:</strong> '+cnpj:''} &nbsp;|&nbsp; <strong>Data:</strong> ${today}</p><p class="intro-line">Segue abaixo as condições comerciais detalhadas para avaliação:</p><div class="section-label">Descrição</div><div class="desc-box"><p>Com nossa consultoria especializada, realizamos uma análise personalizada do perfil de uso da sua empresa e, a partir disso, selecionamos as melhores opções disponíveis no mercado, sempre alinhadas às necessidades reais e específicas do seu negócio.</p></div><table><thead class="table-head"><tr><th>Produto ou Serviço</th><th class="center">Qtd.</th><th class="center">Preço</th><th class="right">Sub-total</th></tr></thead><tbody class="table-body">${rowsHtml}</tbody><tfoot><tr class="total-row"><td colspan="3" class="total-label">Valor total do pedido</td><td class="total-amount">R$&nbsp;${grandStr}</td></tr></tfoot></table><div class="terms-section"><div class="terms-box"><p><strong>Serviços Avulso:</strong> 50% de entrada + 50% no término do serviço. Garantia de 3 meses.</p><p><strong>Serviços Mensais:</strong> Você terá um consultor exclusivo para atender suas demandas de telecom 24h por dia, com gestão completa de contas, auditoria contínua, contestação de faturas, trocas e controle de chips, acesso ilimitado ao portal Fatura Expert, atendimento com analista especializado, gestão de contas de todas as operadoras, acompanhamento de protocolos, renegociação de planos, emissão de relatórios gerenciais, suporte em portabilidades, controle de consumo e acompanhamento estratégico contínuo.</p><p><strong>Cliente já cadastrado como cliente mensal fica isento de cobrança Expert por demanda.</strong></p></div></div><div class="signature-section"><div class="signature-name">Hely Mendonça</div><div class="signature-role">Consultor Especializado · Fatura Expert</div></div></div><div class="footer-bar"><p>© ${new Date().getFullYear()} <strong>Fatura Expert</strong> · Cachoeiro de Itapemirim – ES</p><p><strong>(27) 4042-2220</strong> · Seg–Sáb 8h–20h</p></div><div class="bottom-border"></div></div></body></html>`;
+}
+
+function buildConsolidatedLeadHTML(c, grand){
+  const today=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const grandStr=grand.toFixed(2).replace('.',',');
+  const plansHtml=cart.map((item,i)=>{
+    const sub=fmtBRL(item.priceNum*item.qty);
+    const unit=fmtBRL(item.priceNum);
+    return `<div class="plan-box"><div class="plan-name">${i+1}. ${item.name}</div><div class="plan-row"><span>Preço por unidade</span><strong>${unit}</strong></div><div class="plan-row"><span>Quantidade</span><strong>${item.qty} linha${item.qty>1?'s':''}</strong></div><div class="plan-row"><span>Sub-total / mês</span><strong style="color:#FF6B1A">${sub}</strong></div></div>`;
+  }).join('');
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Inter,Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;}.wrapper{max-width:620px;margin:0 auto;background:#fff;}.top-border{height:5px;background:linear-gradient(90deg,#FF6B1A,#FF8C45);}.header{padding:24px 32px 20px;border-bottom:1px solid #eaeef5;display:flex;align-items:center;justify-content:space-between;gap:16px;}.logo-brand{font-size:22px;font-weight:900;}.logo-brand .fatura{color:#00AEEF;}.logo-brand .expert{color:#1a1a2e;}.logo-tag{font-size:9px;font-weight:600;color:#8a9ab5;text-transform:uppercase;letter-spacing:1.2px;margin-top:3px;}.header-badge{background:linear-gradient(135deg,#FF6B1A,#FF8C45);color:#fff;font-size:11px;font-weight:800;padding:6px 14px;border-radius:50px;white-space:nowrap;}.body{padding:28px 32px 24px;}.alert-title{font-size:20px;font-weight:900;color:#1a1a2e;margin-bottom:4px;}.alert-sub{font-size:12.5px;color:#5a6b8a;margin-bottom:22px;}.section-label{font-size:10px;font-weight:700;color:#FF6B1A;text-transform:uppercase;letter-spacing:1.3px;margin-bottom:8px;}.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px;}.info-card{background:#f8faff;border:1px solid #e2e8f4;border-radius:10px;padding:12px 14px;}.info-card.full{grid-column:1/-1;}.info-card .label{font-size:10px;font-weight:700;color:#8a9ab5;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;}.info-card .value{font-size:13.5px;font-weight:700;color:#1a1a2e;}.info-card .value.blue{color:#2563EB;}.plan-box{background:linear-gradient(135deg,#EEF4FF,#F8FBFF);border:1.5px solid #C7D9FF;border-radius:12px;padding:16px 18px;margin-bottom:12px;}.plan-box .plan-name{font-size:15px;font-weight:800;color:#1a1a2e;margin-bottom:8px;}.plan-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#5a6b8a;padding:5px 0;border-bottom:1px dashed #dde6f5;}.plan-row:last-child{border-bottom:none;padding-bottom:0;}.plan-row strong{color:#1a1a2e;font-weight:700;}.grand-total-box{background:#fff8f5;border:2px solid #FF6B1A;border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;margin-top:4px;}.grand-total-label{font-size:14px;font-weight:800;color:#1a1a2e;}.grand-total-val{font-size:20px;font-weight:900;color:#FF6B1A;}.footer-bar{background:linear-gradient(90deg,#00AEEF,#0078C8);padding:13px 32px;display:flex;align-items:center;justify-content:space-between;}.footer-bar p{color:rgba(255,255,255,.85);font-size:10.5px;}.footer-bar p strong{color:#fff;}.bottom-border{height:3px;background:linear-gradient(90deg,#FF6B1A,#FF8C45);}</style></head><body><div class="wrapper"><div class="top-border"></div><div class="header"><div><div class="logo-brand"><span class="fatura">Fatura</span> <span class="expert">expert</span></div><div class="logo-tag">Painel Interno · Novo Lead</div></div><div class="header-badge">🔔 NOVO LEAD</div></div><div class="body"><div class="alert-title">Nova solicitação recebida</div><div class="alert-sub">Recebido em ${today} · Contato imediato recomendado</div><div class="section-label">Dados do cliente</div><div class="info-grid"><div class="info-card full"><div class="label">Razão Social</div><div class="value">${c.nome||'—'}</div></div><div class="info-card"><div class="label">WhatsApp</div><div class="value blue">${c.tel||'—'}</div></div><div class="info-card"><div class="label">E-mail</div><div class="value">${c.email||'—'}</div></div><div class="info-card full"><div class="label">CNPJ</div><div class="value">${c.cpf||'—'}</div></div></div><div class="section-label">Planos solicitados</div>${plansHtml}<div class="grand-total-box"><span class="grand-total-label">Total / mês</span><span class="grand-total-val">R$&nbsp;${grandStr}</span></div></div><div class="footer-bar"><p>© ${new Date().getFullYear()} <strong>Fatura Expert</strong> · Sistema interno</p><p><strong>(27) 4042-2220</strong></p></div><div class="bottom-border"></div></div></body></html>`;
+}
+
+async function sendProposalToClient(d){
+  if(!d.email) return;
+  try{ await emailjs.send(EJS_SERVICE_ID,EJS_TEMPLATE_ID,{to_email:d.email,to_name:d.nome,plano:d.plano,qty:d.qty,total:d.total,proposal_html:buildProposalHTML(d)}); }
+  catch(e){ console.warn('proposta:',e); }
+}
+async function sendLeadInternal(d){
+  try{ await emailjs.send(EJS_SERVICE_ID,EJS_TEMPLATE_LEAD,{to_email:LEAD_EMAIL,to_name:'Equipe Fatura Expert',lead_html:buildLeadHTML(d)}); }
+  catch(e){ console.warn('lead:',e); }
+}
+
+/* ═══════════════════════ JSONBIN CONFIG ═══════════════════════ */
+const JB_ACCESS_KEY = '$2a$10$xjmF/PLn73ijTwlYhUiEjuCR6dtJBluxfnwyLhchx7qnZHkgDi9xe';
+const JB_BIN_ID     = '69f5596caaba8821975fce30';
+
+/* ═══════════════════════ PLANS (carregado da nuvem) ═══════════════════════ */
+let plans = [];
+
+const opColors={vivo:'#6610f2',claro:'#e61e1e'};
+const catLabels={movel:'📱 Móvel',internet:'🌐 Banda Larga',combo:'📦 Combo',imperdivel:'🔥 Oferta Imperdível'};
+const opLabels={all:'Todas as operadoras',vivo:'Vivo',claro:'Claro'};
+let activeOp='all',activeCat='all',currentIdx=0,currentQty=1,currentUnit=0;
+
+/* ═══════════════════════ FILTERS ═══════════════════════ */
+function setOpFilter(op,btn){
+  activeOp=op;
+  document.querySelectorAll('#opFilterBar .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderCards();
+}
+function setCatFilter(cat,btn){
+  activeCat=cat;
+  document.querySelectorAll('#catFilterBar .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderCards();
+}
+function renderCards(){
+  const grid=document.getElementById('cardsGrid'); grid.innerHTML=''; let n=0;
+  const visible=[];
+  plans.forEach((p,gi)=>{
+    if(activeOp!=='all'&&p.op!==activeOp) return;
+    if(activeCat!=='all'&&p.cat!==activeCat) return;
+    visible.push({p,gi});
+  });
+  visible.sort((a,b)=>a.p.featured===b.p.featured?0:a.p.featured?1:-1);
+  document.getElementById('resultsCount').innerHTML=`<strong>${visible.length}</strong> plano${visible.length!==1?'s':''} encontrado${visible.length!==1?'s':''}`;
+  const tagsEl=document.getElementById('activeTags'); tagsEl.innerHTML='';
+  if(activeOp!=='all') tagsEl.innerHTML+=`<span class="active-tag">${opLabels[activeOp]}</span>`;
+  if(activeCat!=='all') tagsEl.innerHTML+=`<span class="active-tag">${catLabels[activeCat]}</span>`;
+  if(!visible.length){
+    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><h3>Nenhum plano encontrado</h3><p>Tente combinar outros filtros.</p></div>`;
+    return;
+  }
+  visible.forEach(({p,gi})=>{
+    const sm=p.speed.match(/^(\d+)(GB|MB)$/);
+    let gbHtml;
+    if(sm){ gbHtml=`<div class="gb-number">${sm[1]}</div><div class="gb-label">${sm[2]==='MB'?sm[2]+' de velocidade':sm[2]}</div>`; }
+    else{
+      const cm=p.speed.match(/^(.+)\+(.+)$/);
+      gbHtml=cm?`<div class="gb-number" style="font-size:1.1rem;line-height:1.3;padding:2px 6px;">${cm[1]}</div><div class="gb-label">+ ${cm[2]}</div>`
+              :`<div class="gb-number" style="font-size:1.2rem;padding:4px 8px;">${p.speed}</div><div class="gb-label">serviço incluso</div>`;
+    }
+    const card=document.createElement('div');
+    const xc=p.cat==='imperdivel'?'cat-imperdivel-card':p.cat==='combo'?'cat-combo-card':'';
+    card.className='plan-card'+(p.featured?' featured':'')+' '+xc;
+    card.style.animationDelay=(n*0.045)+'s';
+    card.innerHTML=`
+      <div class="card-top-badges">
+        <div class="cat-badge ${p.cat}">${catLabels[p.cat]}</div>
+        ${p.featured?'<div class="destaque-badge">DESTAQUE</div>':''}
+      </div>
+      <div class="op-strip">
+        <div class="op-logo ${p.op}">${p.opLabel.toUpperCase()}</div>
+        <div><div class="op-name">${p.opLabel}</div><div class="plan-name">${p.name}</div></div>
+      </div>
+      <div class="gb-display">${gbHtml}</div>
+      <ul class="features">${p.features.map(f=>`<li class="${f===p.highlight?'highlight':''}">${f}</li>`).join('')}</ul>
+      <div class="price-row"><div class="price">${p.price}<span class="price-label">/unid.</span></div><div class="price-period">por mês</div></div>
+      <button class="btn-contratar" onclick="openModal(${gi})">Contratar agora →</button>`;
+    grid.appendChild(card); n++;
+  });
+}
+
+/* ═══════════════════════ MODAL ═══════════════════════ */
+function openModal(idx){
+  currentIdx=idx; currentQty=1;
+  const p=plans[idx]; currentUnit=p.priceNum;
+  document.getElementById('mBadge').textContent=p.opLabel.toUpperCase();
+  document.getElementById('mBadge').style.color=opColors[p.op];
+  document.getElementById('mTitle').textContent=p.name;
+  document.getElementById('mSub').textContent=p.sub;
+  document.getElementById('mPrice').textContent=p.price;
+  document.getElementById('mNote').innerHTML=`${p.speed}<br>por unidade`;
+  const ic=['📶','📞','💬','🎵','📺','☁️','🛡️','🌐','👨‍👩‍👧','🖥️'];
+  document.getElementById('mFeatures').innerHTML=p.features.map((f,i)=>`<li><span class="icon">${ic[i%ic.length]}</span>${f}</li>`).join('');
+  switchTab('cadastro');
+  document.getElementById('successScreen').classList.remove('show');
+  document.getElementById('formArea').style.display='block';
+  document.getElementById('submitBtn').disabled=false;
+  document.getElementById('submitBtn').textContent='✅ Confirmar contratação';
+  document.getElementById('formError').classList.remove('show');
+  document.getElementById('successEmailMsg').innerHTML='';
+  if(cartContact){
+    document.getElementById('fNome').value=cartContact.nome||'';
+    document.getElementById('fTel').value=cartContact.tel||'';
+    document.getElementById('fCpf').value=cartContact.cpf||'';
+    document.getElementById('fEmail').value=cartContact.email||'';
+  } else {
+    ['fNome','fTel','fCpf','fEmail'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  }
+  document.getElementById('qtyInput').value=1; currentQty=1; updateTotal();
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  document.querySelector('.theme-toggle').classList.add('hidden');
+  requestAnimationFrame(()=>{
+    const sheet=document.getElementById('modalSheet');
+    const tabs=document.querySelector('.modal-tabs');
+    if(sheet&&tabs){
+      const top=tabs.getBoundingClientRect().top-sheet.getBoundingClientRect().top+sheet.scrollTop;
+      sheet.scrollTo({top:top-12,behavior:'smooth'});
+    }
+  });
+}
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); document.body.style.overflow=''; document.querySelector('.theme-toggle').classList.remove('hidden'); }
+function changeQty(delta){ let v=parseInt(document.getElementById('qtyInput').value)||1; v=Math.max(1,Math.min(999,v+delta)); document.getElementById('qtyInput').value=v; currentQty=v; updateTotal(); }
+function updateTotal(){
+  const v=Math.max(1,parseInt(document.getElementById('qtyInput').value)||1);
+  currentQty=v; document.getElementById('qtyInput').value=v;
+  const tot=currentUnit*v; const fTot=fmtBRL(tot);
+  document.getElementById('qtyUnitText').innerHTML=fmtBRL(currentUnit)+' /unid.<br>× '+v;
+  document.getElementById('qtyTotal').textContent=fTot;
+  document.getElementById('fqVal').textContent=v;
+  document.getElementById('fTotal').textContent=fTot;
+  document.getElementById('waMiniVal').textContent=v;
+  document.getElementById('waSumQtyLabel').textContent=v+' linha'+(v>1?'s':'');
+  document.getElementById('waSumTotal').textContent=fTot;
+  const p=plans[currentIdx]; if(p) document.getElementById('waSumName').textContent=p.name;
+  updateWALink();
+}
+function updateWALink(){
+  const p=plans[currentIdx]; if(!p) return;
+  const msg=encodeURIComponent(`Olá! Tenho interesse no *${p.name}* (${p.price}/unid.).\nQuantidade: *${currentQty}* linha${currentQty>1?'s':''}\nOrçamento total: *${fmtBRL(currentUnit*currentQty)}/mês*`);
+  document.getElementById('waLink').href=`https://wa.me/${WA_NUMBER}?text=${msg}`;
+}
+function switchTab(tab){
+  document.querySelectorAll('.mtab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelector('.mtab.'+tab).classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+/* ═══════════════════════ SUBMIT ═══════════════════════ */
+async function submitForm(){
+  const nome=document.getElementById('fNome').value.trim();
+  const tel=document.getElementById('fTel').value.trim();
+  const cpf=document.getElementById('fCpf').value.trim();
+  const email=document.getElementById('fEmail').value.trim();
+  const errEl=document.getElementById('formError');
+  errEl.classList.remove('show');
+  if(!nome||!tel){ errEl.textContent='Por favor, preencha nome e WhatsApp.'; errEl.classList.add('show'); return; }
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true; btn.textContent='⏳ Registrando...';
+  const p=plans[currentIdx];
+  const totalNum=currentUnit*currentQty;
+  cartContact={nome,tel,cpf,email};
+  cart.push({name:p.name,opLabel:p.opLabel,qty:currentQty,priceNum:p.priceNum});
+  updateCartBar();
+  const leadData={nome,tel,cpf,email,plano:p.name,preco:p.price,precoNum:p.priceNum,qty:String(currentQty),total:fmtBRL(totalNum),totalNum};
+  sendLeadInternal(leadData);
+  btn.disabled=false; btn.textContent='✅ Confirmar contratação';
+  document.getElementById('formArea').style.display='none';
+  document.getElementById('successEmailMsg').innerHTML='';
+  document.getElementById('cartBadgeIl').textContent=cart.length;
+  document.getElementById('successScreen').classList.add('show');
+}
+
+/* ═══════════════════════ LOAD PLANS FROM CLOUD ═══════════════════════ */
+async function initPlans() {
+  // 1. Renderiza na hora com dados locais (localStorage ou PLANS_DEFAULT)
+  //    → página aparece instantaneamente para o usuário
+  plans = loadPlans();
+  plans.forEach(p => { p.price = fmtBRL(p.priceNum); });
+  renderCards();
+
+  // 2. Busca da nuvem em background — sem abortar cedo
+  //    O fetch NÃO bloqueia a página; pode demorar sem problema
+  //    Timeout de 25s apenas como segurança contra conexões mortas
+  if (!JB_BIN_ID || JB_BIN_ID === 'COLE_O_BIN_ID_AQUI') return;
+  let tid;
+  try {
+    const ctrl = new AbortController();
+    tid = setTimeout(() => ctrl.abort(), 25000);
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${JB_BIN_ID}/latest`, {
+      headers: { 'X-Master-Key': JB_ACCESS_KEY },
+      signal: ctrl.signal
+    });
+    clearTimeout(tid);
+    if (!res.ok) return;
+    const data = await res.json();
+    const raw  = (data.record && data.record.plans) || [];
+    if (!raw.length) return;
+    // Persiste localmente → visita seguinte neste browser será instantânea
+    try { localStorage.setItem('fe_plans', JSON.stringify(raw)); } catch(_) {}
+    // Atualiza os cards se a nuvem trouxe dados diferentes dos exibidos
+    const localHash = JSON.stringify(plans.map(p => p.name));
+    const cloudHash = JSON.stringify(raw.map(p => p.name));
+    if (cloudHash !== localHash) {
+      plans = raw;
+      plans.forEach(p => { p.price = fmtBRL(p.priceNum); });
+      renderCards();
+    }
+  } catch(e) {
+    clearTimeout(tid);
+    if (e.name !== 'AbortError') console.warn('JSONBin indisponível:', e.message);
+  }
+}
+
+/* ═══════════════════════ EVENTS ═══════════════════════ */
+document.getElementById('modalOverlay').addEventListener('click',function(e){ if(e.target===this) closeModal(); });
+document.getElementById('cartOverlay').addEventListener('click',function(e){ if(e.target===this) closeCartView(); });
+document.getElementById('qtyInput').addEventListener('input',updateTotal);
+initPlans();
+</script>
+</body>
+</html>

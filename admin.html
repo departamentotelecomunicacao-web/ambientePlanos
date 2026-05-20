@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fatura Expert — Painel de Planos</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Outfit',sans-serif;background:#F4F6FB;color:#0D1B35;min-height:100vh;}
+a{text-decoration:none;}
+
+/* ── TOP BAR ── */
+.topbar{background:#fff;border-bottom:1px solid #E2E8F4;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(13,27,53,.06);}
+.topbar-brand{font-family:'Sora',sans-serif;font-weight:800;font-size:1.1rem;color:#0D1B35;}
+.topbar-brand span{color:#2563EB;}
+.topbar-actions{display:flex;gap:8px;align-items:center;}
+.btn{border:none;border-radius:9px;padding:9px 16px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .18s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:linear-gradient(135deg,#2563EB,#3A7BD5);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.22);}
+.btn-primary:hover{box-shadow:0 4px 14px rgba(37,99,235,.32);transform:translateY(-1px);}
+.btn-danger{background:#FFF0F0;color:#cc0000;border:1px solid #FFBCBC;}
+.btn-danger:hover{background:#FFE0E0;}
+.btn-ghost{background:#F0F5FF;color:#2563EB;border:1px solid #C7D9FF;}
+.btn-ghost:hover{background:#E0ECFF;}
+.btn-success{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;}
+.btn-success:hover{transform:translateY(-1px);}
+.btn-sm{padding:6px 11px;font-size:.74rem;}
+.btn-preview{background:#0D1B35;color:#fff;border-radius:9px;padding:9px 16px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .18s;display:inline-flex;align-items:center;gap:6px;}
+.btn-preview:hover{background:#1A2B4A;}
+
+/* ── LAYOUT ── */
+.main{max-width:1100px;margin:0 auto;padding:24px 20px 60px;}
+.page-title{font-family:'Sora',sans-serif;font-weight:800;font-size:1.4rem;color:#0D1B35;margin-bottom:4px;}
+.page-sub{font-size:.82rem;color:#5A6B8A;margin-bottom:24px;}
+
+/* ── STATS ROW ── */
+.stats-row{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;}
+.stat-card{background:#fff;border:1px solid #E2E8F4;border-radius:12px;padding:14px 18px;flex:1;min-width:120px;box-shadow:0 1px 6px rgba(13,27,53,.05);}
+.stat-val{font-family:'Sora',sans-serif;font-weight:800;font-size:1.6rem;color:#0D1B35;}
+.stat-lbl{font-size:.72rem;color:#5A6B8A;margin-top:2px;}
+
+/* ── NOTIFICATION ── */
+.notif{display:none;padding:11px 16px;border-radius:10px;font-size:.82rem;font-weight:600;margin-bottom:16px;align-items:center;gap:8px;}
+.notif.show{display:flex;}
+.notif.ok{background:#F0FBF4;border:1px solid #A7E8C0;color:#166534;}
+.notif.err{background:#FFF0F0;border:1px solid #FFBCBC;color:#cc0000;}
+
+/* ── PLAN LIST ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;}
+.section-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:#5A6B8A;display:flex;align-items:center;gap:6px;}
+.section-title::after{content:'';flex:1;height:1px;background:#E2E8F4;}
+.plan-list{display:flex;flex-direction:column;gap:8px;margin-bottom:32px;}
+.plan-row{background:#fff;border:1px solid #E2E8F4;border-radius:12px;padding:13px 15px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(13,27,53,.04);transition:border-color .18s;}
+.plan-row:hover{border-color:#C7D9FF;}
+.plan-row-op{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.62rem;flex-shrink:0;line-height:1.1;text-align:center;}
+.op-vivo{background:#f0ebff;color:#6610f2;border:1px solid rgba(102,16,242,.2);}
+.op-claro{background:#fff0f0;color:#e61e1e;border:1px solid rgba(230,30,30,.2);}
+.plan-row-info{flex:1;min-width:0;}
+.plan-row-name{font-weight:700;font-size:.86rem;color:#0D1B35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.plan-row-meta{font-size:.7rem;color:#5A6B8A;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;}
+.meta-badge{display:inline-flex;align-items:center;background:#F0F5FF;border-radius:50px;padding:1px 8px;font-size:.65rem;font-weight:600;color:#2563EB;}
+.meta-badge.imperdivel{background:#fce4ec;color:#c2185b;}
+.meta-badge.combo{background:#ede9fe;color:#7c3aed;}
+.meta-badge.movel{background:#EEF4FF;color:#2563EB;}
+.meta-badge.internet{background:#e0f7fa;color:#0891b2;}
+.plan-row-price{font-family:'Sora',sans-serif;font-weight:800;font-size:.96rem;color:#0D1B35;flex-shrink:0;text-align:right;}
+.plan-row-price small{font-size:.62rem;color:#5A6B8A;font-weight:500;display:block;}
+.featured-dot{width:7px;height:7px;border-radius:50%;background:#FF6B1A;flex-shrink:0;title:'Destaque';}
+.plan-row-actions{display:flex;gap:6px;flex-shrink:0;}
+
+/* ── ADD FORM ── */
+.add-form-card{background:#fff;border:1.5px solid #C7D9FF;border-radius:16px;padding:22px 22px 18px;box-shadow:0 2px 12px rgba(37,99,235,.07);}
+.add-form-card h3{font-family:'Sora',sans-serif;font-weight:700;font-size:1rem;color:#0D1B35;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:14px;}
+.f-group{display:flex;flex-direction:column;gap:4px;}
+.f-group.full{grid-column:1/-1;}
+.f-label{font-size:.72rem;font-weight:600;color:#5A6B8A;}
+.f-label span{color:#2563EB;}
+input,select,textarea{background:#F8FAFF;border:1.5px solid #E2E8F4;border-radius:9px;padding:10px 12px;color:#0D1B35;font-family:'Outfit',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s,box-shadow .2s;width:100%;}
+input::placeholder,textarea::placeholder{color:#8A9BB8;}
+input:focus,select:focus,textarea:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1);background:#fff;}
+textarea{resize:vertical;min-height:72px;}
+select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235A6B8A' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+.checkbox-row{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#F8FAFF;border:1.5px solid #E2E8F4;border-radius:9px;cursor:pointer;}
+.checkbox-row input[type=checkbox]{width:16px;height:16px;accent-color:#FF6B1A;cursor:pointer;flex-shrink:0;}
+.checkbox-row label{font-size:.84rem;color:#0D1B35;cursor:pointer;font-weight:500;}
+.hint{font-size:.68rem;color:#8A9BB8;margin-top:3px;}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
+
+/* ── RESET CONFIRM ── */
+.danger-zone{margin-top:28px;padding:16px 18px;background:#FFF8F5;border:1.5px solid #FFD5B8;border-radius:12px;}
+.danger-zone h4{font-size:.8rem;font-weight:700;color:#cc4400;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.danger-zone p{font-size:.74rem;color:#5A6B8A;margin-bottom:10px;line-height:1.6;}
+
+/* ── LOGIN OVERLAY ── */
+.login-overlay{position:fixed;inset:0;z-index:999;background:#F4F6FB;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-card{background:#fff;border:1.5px solid #E2E8F4;border-radius:20px;padding:36px 32px 28px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(13,27,53,.12);}
+.login-logo{font-family:'Sora',sans-serif;font-weight:800;font-size:1.35rem;color:#0D1B35;text-align:center;margin-bottom:4px;}
+.login-logo span{color:#2563EB;}
+.login-sub{text-align:center;font-size:.78rem;color:#5A6B8A;margin-bottom:28px;}
+.login-field{display:flex;flex-direction:column;gap:4px;margin-bottom:13px;}
+.login-field label{font-size:.72rem;font-weight:600;color:#5A6B8A;}
+.login-field input{background:#F8FAFF;border:1.5px solid #E2E8F4;border-radius:10px;padding:12px 14px;color:#0D1B35;font-family:'Outfit',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s,box-shadow .2s;width:100%;}
+.login-field input:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1);background:#fff;}
+.login-err{background:#FFF0F0;border:1px solid #FFBCBC;border-radius:8px;padding:9px 13px;font-size:.78rem;color:#cc0000;text-align:center;display:none;margin-bottom:10px;}
+.login-err.show{display:block;}
+.login-btn{width:100%;background:linear-gradient(135deg,#2563EB,#3A7BD5);color:#fff;border:none;border-radius:10px;padding:13px;font-size:.92rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 3px 12px rgba(37,99,235,.28);transition:transform .2s,box-shadow .2s;margin-top:4px;}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(37,99,235,.38);}
+.login-footer{text-align:center;font-size:.68rem;color:#8A9BB8;margin-top:18px;}
+.logout-btn{background:none;border:1px solid #E2E8F4;border-radius:50px;padding:5px 12px;font-size:.72rem;font-weight:600;color:#5A6B8A;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .18s;}
+.logout-btn:hover{border-color:#cc0000;color:#cc0000;}
+
+/* ── BIN ID BANNER ── */
+.bin-banner{display:none;background:#F0FBF4;border:1.5px solid #A7E8C0;border-radius:12px;padding:13px 16px;margin-bottom:18px;gap:10px;align-items:flex-start;flex-wrap:wrap;}
+.bin-banner.show{display:flex;}
+.bin-banner-icon{font-size:1.2rem;flex-shrink:0;margin-top:1px;}
+.bin-banner-body{flex:1;min-width:0;}
+.bin-banner-title{font-size:.78rem;font-weight:700;color:#166534;margin-bottom:4px;}
+.bin-banner-id{font-family:monospace;font-size:.82rem;background:#fff;border:1px solid #A7E8C0;border-radius:6px;padding:5px 10px;color:#0D1B35;word-break:break-all;user-select:all;cursor:pointer;}
+.bin-banner-hint{font-size:.68rem;color:#5A6B8A;margin-top:4px;}
+
+/* ── LOADING ── */
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(244,246,251,.85);z-index:500;align-items:center;justify-content:center;flex-direction:column;gap:12px;}
+.loading-overlay.show{display:flex;}
+.loading-spinner{width:38px;height:38px;border:3px solid #E2E8F4;border-top-color:#2563EB;border-radius:50%;animation:spin .7s linear infinite;}
+.loading-text{font-size:.84rem;color:#5A6B8A;font-weight:600;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:640px){
+  .topbar{padding:11px 14px;}
+  .main{padding:16px 12px 60px;}
+  .plan-row-price{display:none;}
+  .plan-row-actions .btn-sm:not(.btn-danger){display:none;}
+}
+</style>
+<script src="plans-data.js"></script>
+</head>
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo"><span>Fatura</span> Expert</div>
+    <div class="login-sub">Painel de gerenciamento de planos</div>
+    <div class="login-field">
+      <label for="loginUser">Usuário</label>
+      <input type="text" id="loginUser" placeholder="Digite seu usuário" autocomplete="username"/>
+    </div>
+    <div class="login-field">
+      <label for="loginPass">Senha</label>
+      <input type="password" id="loginPass" placeholder="Digite sua senha" autocomplete="current-password"/>
+    </div>
+    <div class="login-err" id="loginErr">Usuário ou senha incorretos.</div>
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-footer">🔒 Acesso restrito — Fatura Expert</div>
+  </div>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">Conectando à nuvem...</div>
+</div>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-brand"><span>Fatura</span> Expert — Painel Admin</div>
+  <div class="topbar-actions">
+    <a class="btn-preview" href="index.html" target="_blank">👁 Ver loja</a>
+    <button class="btn btn-success" id="saveBtn" onclick="saveAndApply()">💾 Salvar alterações</button>
+    <button class="logout-btn" onclick="doLogout()" title="Sair">🚪 Sair</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="page-title">Gerenciar Planos</div>
+  <div class="page-sub">Adicione, edite ou remova planos. Clique em <strong>Salvar alterações</strong> para publicar na loja.</div>
+
+  <!-- NOTIFICATION -->
+  <div class="notif" id="notif"></div>
+
+  <!-- BIN ID BANNER -->
+  <div class="bin-banner" id="binBanner">
+    <div class="bin-banner-icon">☁️</div>
+    <div class="bin-banner-body">
+      <div class="bin-banner-title">Armazenamento em nuvem configurado! Copie o ID abaixo e envie para atualizar a loja:</div>
+      <div class="bin-banner-id" id="binIdValue" title="Clique para selecionar">—</div>
+      <div class="bin-banner-hint">Cole esse ID no arquivo index.html na variável JSONBIN_BIN_ID (ou envie ao desenvolvedor).</div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row" id="statsRow"></div>
+
+  <!-- PLAN LIST -->
+  <div class="section-header">
+    <div class="section-title" style="flex:1">Planos cadastrados</div>
+  </div>
+  <div class="plan-list" id="planList"></div>
+
+  <!-- ADD PLAN FORM -->
+  <div class="section-header">
+    <div class="section-title" style="flex:1">➕ Adicionar novo plano</div>
+  </div>
+  <div class="add-form-card">
+    <h3>📋 Dados do plano</h3>
+    <div class="form-grid">
+      <div class="f-group">
+        <label class="f-label" for="fOp">Operadora <span>*</span></label>
+        <select id="fOp">
+          <option value="vivo">Vivo</option>
+          <option value="claro">Claro</option>
+        </select>
+      </div>
+      <div class="f-group">
+        <label class="f-label" for="fCat">Categoria <span>*</span></label>
+        <select id="fCat">
+          <option value="imperdivel">🔥 Oferta Imperdível</option>
+          <option value="movel">📱 Móvel</option>
+          <option value="internet">🌐 Banda Larga</option>
+          <option value="combo">📦 Combo</option>
+        </select>
+      </div>
+      <div class="f-group">
+        <label class="f-label" for="fName">Nome do plano <span>*</span></label>
+        <input type="text" id="fName" placeholder="Ex: Claro Pós 30GB – Portabilidade"/>
+      </div>
+      <div class="f-group">
+        <label class="f-label" for="fSpeed">Velocidade / GB <span>*</span></label>
+        <input type="text" id="fSpeed" placeholder="Ex: 30GB ou 800MB+30GB"/>
+        <span class="hint">Use 30GB, 800MB, ou 800MB+30GB para combos</span>
+      </div>
+      <div class="f-group">
+        <label class="f-label" for="fPrice">Preço mensal (R$) <span>*</span></label>
+        <input type="number" id="fPrice" placeholder="49.99" step="0.01" min="0"/>
+      </div>
+      <div class="f-group">
+        <label class="f-label" for="fSub">Subtítulo / descrição curta <span>*</span></label>
+        <input type="text" id="fSub" placeholder="Ex: Melhor custo-benefício para empresas"/>
+      </div>
+      <div class="f-group full">
+        <label class="f-label" for="fFeatures">Benefícios <span>*</span> <span style="color:#8A9BB8;font-weight:400;">(um por linha)</span></label>
+        <textarea id="fFeatures" placeholder="Ligações ilimitadas&#10;30 GB de internet&#10;WhatsApp ilimitado&#10;Skeelo incluso"></textarea>
+      </div>
+      <div class="f-group full">
+        <label class="f-label" for="fHighlight">Benefício em destaque (highlight)</label>
+        <input type="text" id="fHighlight" placeholder="Ex: 30 GB total + apps ilimitados"/>
+        <span class="hint">Cole aqui um dos benefícios acima para destacá-lo no card</span>
+      </div>
+      <div class="f-group full">
+        <div class="checkbox-row">
+          <input type="checkbox" id="fFeatured"/>
+          <label for="fFeatured">⭐ Marcar como DESTAQUE (borda laranja + botão laranja)</label>
+        </div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="clearForm()">Limpar</button>
+      <button class="btn btn-primary" id="addPlanBtn" onclick="addPlan()">➕ Adicionar plano</button>
+    </div>
+  </div>
+
+  <!-- DANGER ZONE -->
+  <div class="danger-zone">
+    <h4>⚠️ Zona de risco</h4>
+    <p>Restaura todos os planos para a lista padrão original, apagando qualquer alteração salva.</p>
+    <button class="btn btn-danger btn-sm" onclick="resetToDefault()">🔄 Restaurar planos originais</button>
+  </div>
+</div>
+
+<script>
+/* ─── LOGIN ─── */
+const _u = 'RGVwYXJ0YW1lbnRv';
+const _p = 'TGlnaHRAMjI1NQ==';
+
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginErr');
+  if (u === atob(_u) && p === atob(_p)) {
+    sessionStorage.setItem('fe_auth', '1');
+    document.getElementById('loginOverlay').style.display = 'none';
+    err.classList.remove('show');
+    init();
+  } else {
+    err.classList.add('show');
+    document.getElementById('loginPass').value = '';
+    document.getElementById('loginPass').focus();
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('fe_auth');
+  location.reload();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const loginOverlay = document.getElementById('loginOverlay');
+  if (sessionStorage.getItem('fe_auth') === '1') {
+    loginOverlay.style.display = 'none';
+    init();
+  }
+  document.getElementById('loginPass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('loginUser').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('loginPass').focus();
+  });
+});
+
+/* ─── JSONBIN CONFIG ─── */
+const JB_MASTER = '$2a$10$xjmF/PLn73ijTwlYhUiEjuCR6dtJBluxfnwyLhchx7qnZHkgDi9xe';
+const JB_URL    = 'https://api.jsonbin.io/v3/b';
+const JB_BIN_ID = '69f5596caaba8821975fce30';
+
+/* ─── STATE ─── */
+let plans        = [];
+let nextId       = 0;
+let binId        = JB_BIN_ID;
+let editingIndex = -1; // -1 = adicionando novo; >= 0 = índice do plano sendo editado
+
+function fmtBRL(v){ return 'R$ '+Number(v).toFixed(2).replace('.',','); }
+const catLabels = { movel:'📱 Móvel', internet:'🌐 Banda Larga', combo:'📦 Combo', imperdivel:'🔥 Imperdível' };
+
+/* ─── LOADING ─── */
+function setLoading(show, txt='Conectando à nuvem...') {
+  const ov = document.getElementById('loadingOverlay');
+  document.getElementById('loadingText').textContent = txt;
+  ov.classList.toggle('show', show);
+}
+
+/* ─── BIN ID BANNER ─── */
+function showBinBanner(id) {
+  const b = document.getElementById('binBanner');
+  document.getElementById('binIdValue').textContent = id;
+  b.classList.add('show');
+}
+
+/* ─── JSONBIN: CRIAR BIN ─── */
+async function createBin() {
+  setLoading(true, 'Criando armazenamento em nuvem pela primeira vez...');
+  const res = await fetch(JB_URL, {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', 'X-Master-Key': JB_MASTER, 'X-Bin-Name': 'fatura-expert-planos' },
+    body: JSON.stringify({ plans: PLANS_DEFAULT })
+  });
+  if (!res.ok) throw new Error('Falha ao criar bin (' + res.status + ')');
+  const data = await res.json();
+  binId = data.metadata.id;
+  localStorage.setItem('fe_bin_id', binId);
+  plans = PLANS_DEFAULT.map((p, i) => ({ ...p, _id: i }));
+  nextId = plans.length;
+}
+
+/* ─── JSONBIN: CARREGAR ─── */
+async function loadFromBin() {
+  setLoading(true, 'Carregando planos da nuvem...');
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res  = await fetch(`${JB_URL}/${binId}/latest`, {
+      headers: { 'X-Master-Key': JB_MASTER },
+      signal: ctrl.signal
+    });
+    clearTimeout(tid);
+    if (!res.ok) throw new Error('Falha ao carregar (' + res.status + ')');
+    const data = await res.json();
+    const raw  = (data.record && data.record.plans) || PLANS_DEFAULT;
+    plans  = raw.map((p, i) => ({ ...p, _id: i }));
+    nextId = plans.length;
+  } catch(e) {
+    clearTimeout(tid);
+    throw e;
+  }
+}
+
+/* ─── JSONBIN: SALVAR ─── */
+async function saveAndApply() {
+  const btn  = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Salvando...';
+  const clean = plans.map(({ _id, price, ...rest }) => rest);
+  const ctrl  = new AbortController();
+  const tid   = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(`${JB_URL}/${binId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type':'application/json', 'X-Master-Key': JB_MASTER },
+      body: JSON.stringify({ plans: clean }),
+      signal: ctrl.signal
+    });
+    clearTimeout(tid);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    try { localStorage.setItem('fe_plans', JSON.stringify(clean)); } catch(e) {}
+    notify('✅ Planos salvos! A loja atualizará em alguns instantes.', 'ok');
+  } catch(e) {
+    clearTimeout(tid);
+    const msg = e.name === 'AbortError'
+      ? '⏱ Timeout: a conexão demorou demais. Verifique a internet e tente novamente.'
+      : '❌ Erro ao salvar: ' + e.message;
+    notify(msg, 'err');
+  }
+  btn.disabled = false;
+  btn.textContent = '💾 Salvar alterações';
+}
+
+/* ─── INIT ─── */
+async function init() {
+  try {
+    await loadFromBin();
+    showBinBanner(binId);
+  } catch(e) {
+    notify('Erro de conexão: ' + e.message + ' — usando dados locais.', 'err');
+    plans  = PLANS_DEFAULT.map((p, i) => ({ ...p, _id: i }));
+    nextId = plans.length;
+  }
+  setLoading(false);
+  renderList();
+}
+
+/* ─── RENDER LIST ─── */
+function renderList() {
+  const el = document.getElementById('planList');
+  if (!plans.length) {
+    el.innerHTML = '<div style="text-align:center;padding:30px;color:#8A9BB8;font-size:.84rem;">Nenhum plano cadastrado. Adicione abaixo.</div>';
+    renderStats(); return;
+  }
+  el.innerHTML = plans.map((p, i) => `
+    <div class="plan-row" id="row-${p._id}">
+      ${p.featured ? '<div class="featured-dot" title="Destaque"></div>' : '<div style="width:7px"></div>'}
+      <div class="plan-row-op op-${p.op}">${p.opLabel.toUpperCase()}</div>
+      <div class="plan-row-info">
+        <div class="plan-row-name">${p.name}</div>
+        <div class="plan-row-meta">
+          <span class="meta-badge ${p.cat}">${catLabels[p.cat]||p.cat}</span>
+          <span>${p.speed}</span>
+          <span>${p.sub}</span>
+        </div>
+      </div>
+      <div class="plan-row-price">${fmtBRL(p.priceNum)}<small>/unid./mês</small></div>
+      <div class="plan-row-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editPlan(${i})" title="Editar">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deletePlan(${i})" title="Excluir">🗑</button>
+      </div>
+    </div>`).join('');
+  renderStats();
+}
+
+/* ─── STATS ─── */
+function renderStats() {
+  const total = plans.length;
+  const vivo  = plans.filter(p => p.op === 'vivo').length;
+  const claro = plans.filter(p => p.op === 'claro').length;
+  const dest  = plans.filter(p => p.featured).length;
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Total de planos</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#6610f2">${vivo}</div><div class="stat-lbl">Vivo</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#e61e1e">${claro}</div><div class="stat-lbl">Claro</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#FF6B1A">${dest}</div><div class="stat-lbl">Destaques</div></div>`;
+}
+
+/* ─── ADD / ATUALIZAR PLAN ─── */
+function addPlan() {
+  const op          = document.getElementById('fOp').value;
+  const cat         = document.getElementById('fCat').value;
+  const name        = document.getElementById('fName').value.trim();
+  const speed       = document.getElementById('fSpeed').value.trim();
+  const priceRaw    = document.getElementById('fPrice').value.trim();
+  const sub         = document.getElementById('fSub').value.trim();
+  const featuresRaw = document.getElementById('fFeatures').value;
+  const highlight   = document.getElementById('fHighlight').value.trim();
+  const featured    = document.getElementById('fFeatured').checked;
+
+  if (!name || !speed || !priceRaw || !sub || !featuresRaw.trim()) {
+    notify('Preencha todos os campos obrigatórios.', 'err'); return;
+  }
+  const priceNum = parseFloat(priceRaw.replace(',', '.'));
+  if (isNaN(priceNum) || priceNum <= 0) { notify('Preço inválido.', 'err'); return; }
+  const features = featuresRaw.split('\n').map(l => l.trim()).filter(Boolean);
+  if (!features.length) { notify('Informe ao menos um benefício.', 'err'); return; }
+  const opLabel = op === 'vivo' ? 'Vivo' : 'Claro';
+
+  if (editingIndex >= 0) {
+    // ATUALIZA o plano existente no lugar — sem apagar e sem criar duplicata
+    plans[editingIndex] = {
+      ...plans[editingIndex],
+      op, opLabel, cat, name, speed, priceNum, sub, features,
+      highlight: highlight || features[0], featured
+    };
+    notify(`Plano "${name}" atualizado! Clique em 💾 Salvar para publicar.`, 'ok');
+  } else {
+    // ADICIONA novo plano
+    plans.push({ _id: nextId++, op, opLabel, cat, name, speed, priceNum, sub, features, highlight: highlight || features[0], featured });
+    notify(`Plano "${name}" adicionado! Clique em 💾 Salvar para publicar na loja.`, 'ok');
+  }
+
+  clearForm();
+  renderList();
+}
+
+/* ─── DELETE PLAN ─── */
+function deletePlan(i) {
+  const p = plans[i];
+  if (!confirm(`Excluir o plano "${p.name}"?`)) return;
+  if (editingIndex === i) {
+    clearForm(); // estava editando este plano — cancela
+  } else if (editingIndex > i) {
+    editingIndex--; // índices deslocaram após o splice
+  }
+  plans.splice(i, 1);
+  renderList();
+  notify(`Plano excluído. Clique em 💾 Salvar para publicar.`, 'ok');
+}
+
+/* ─── EDIT PLAN ─── */
+function editPlan(i) {
+  const p = plans[i];
+  document.getElementById('fOp').value        = p.op;
+  document.getElementById('fCat').value       = p.cat;
+  document.getElementById('fName').value      = p.name;
+  document.getElementById('fSpeed').value     = p.speed;
+  document.getElementById('fPrice').value     = p.priceNum;
+  document.getElementById('fSub').value       = p.sub;
+  document.getElementById('fFeatures').value  = p.features.join('\n');
+  document.getElementById('fHighlight').value = p.highlight || '';
+  document.getElementById('fFeatured').checked = p.featured;
+
+  // Registra qual índice está sendo editado — NÃO remove da lista
+  editingIndex = i;
+  document.getElementById('addPlanBtn').textContent = '💾 Atualizar plano';
+
+  document.querySelector('.add-form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  notify('Plano carregado. Edite os campos e clique em 💾 Atualizar plano.', 'ok');
+}
+
+/* ─── CLEAR FORM ─── */
+function clearForm() {
+  ['fName','fSpeed','fPrice','fSub','fFeatures','fHighlight'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fFeatured').checked = false;
+  document.getElementById('fOp').value  = 'vivo';
+  document.getElementById('fCat').value = 'imperdivel';
+  // Reseta modo de edição
+  editingIndex = -1;
+  document.getElementById('addPlanBtn').textContent = '➕ Adicionar plano';
+}
+
+/* ─── RESET TO DEFAULT ─── */
+async function resetToDefault() {
+  if (!confirm('Tem certeza? Isso vai restaurar os planos originais na nuvem.')) return;
+  plans  = PLANS_DEFAULT.map((p, i) => ({ ...p, _id: i }));
+  nextId = plans.length;
+  renderList();
+  await saveAndApply();
+  notify('Planos restaurados para o padrão original.', 'ok');
+}
+
+/* ─── NOTIFY ─── */
+function notify(msg, type='ok') {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.className = `notif show ${type}`;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 6000);
+}
+</script>
+</body>
+</html>
