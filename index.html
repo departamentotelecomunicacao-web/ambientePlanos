@@ -637,40 +637,69 @@ function clearCart(){
 function continueShopping(){ closeModal(); }
 
 /* ═══════════════════════ FINALIZE CART ═══════════════════════ */
+/* helper: envia com timeout de 12s; retorna {ok:true} ou {ok:false, error:'mensagem'} */
+function emailWithTimeout(serviceId, templateId, params, timeoutMs=12000){
+  return Promise.race([
+    emailjs.send(serviceId, templateId, params).then(()=>({ok:true})).catch(e=>({ok:false,error:(e&&e.text)||(e&&e.message)||String(e)})),
+    new Promise(resolve=>setTimeout(()=>resolve({ok:false,error:'timeout'}),timeoutMs))
+  ]);
+}
+
 async function finalizeCart(){
   const btn=document.getElementById('cartFinalizeBtn');
   btn.disabled=true;
   btn.textContent='⏳ Enviando...';
   const c=cartContact||{};
   const grand=cartGrand();
-  if(c.email) await sendConsolidatedProposal(c, grand);
-  await sendConsolidatedLead(c, grand);
-  btn.style.display='none';
-  document.getElementById('cartFinalizeSuccess').classList.add('show');
+
+  /* dispara os dois em paralelo (mais rápido que sequencial) */
+  const tasks=[ sendConsolidatedLead(c,grand) ];
+  if(c.email) tasks.unshift(sendConsolidatedProposal(c,grand));
+  const results=await Promise.all(tasks);
+  const allOk=results.every(r=>r&&r.ok);
+  const leadOk=results[results.length-1] && results[results.length-1].ok;
+
+  if(leadOk){
+    /* lead interno chegou — sucesso (proposta ao cliente é bônus) */
+    btn.style.display='none';
+    document.getElementById('cartFinalizeSuccess').classList.add('show');
+    if(!allOk){
+      /* lead foi mas proposta ao cliente falhou — avisa discretamente */
+      const successBox=document.getElementById('cartFinalizeSuccess');
+      const warn=document.createElement('p');
+      warn.style.cssText='font-size:.72rem;color:#FF6B1A;margin-top:8px;';
+      warn.textContent='Nota: o e-mail de confirmação ao cliente não pôde ser enviado, mas nossa equipe já recebeu o pedido.';
+      successBox.appendChild(warn);
+    }
+  } else {
+    /* falhou tudo — restaura botão e mostra erro visível */
+    btn.disabled=false;
+    btn.textContent='⚠️ Falhou — tentar novamente';
+    btn.style.background='#cc3300';
+    const errs=results.map(r=>r&&r.error).filter(Boolean).join(' | ');
+    console.error('EmailJS falhou:', errs);
+    alert('❌ Não foi possível enviar o pedido.\n\nMotivo: '+(errs||'sem resposta')+'\n\nVerifique a conexão e tente novamente. Se persistir, contate o suporte.');
+  }
 }
 
 async function sendConsolidatedProposal(c, grand){
-  if(!c.email) return;
-  try{
-    await emailjs.send(EJS_SERVICE_ID, EJS_TEMPLATE_ID, {
-      to_email: c.email,
-      to_name: c.nome||'Cliente',
-      plano: cart.length===1?cart[0].name:`${cart.length} planos solicitados`,
-      qty: String(cartLines()),
-      total: fmtBRL(grand),
-      proposal_html: buildConsolidatedProposalHTML(c, grand)
-    });
-  }catch(e){ console.warn('proposal:', e); }
+  if(!c.email) return {ok:true}; /* sem email do cliente, não é falha */
+  return await emailWithTimeout(EJS_SERVICE_ID, EJS_TEMPLATE_ID, {
+    to_email: c.email,
+    to_name: c.nome||'Cliente',
+    plano: cart.length===1?cart[0].name:`${cart.length} planos solicitados`,
+    qty: String(cartLines()),
+    total: fmtBRL(grand),
+    proposal_html: buildConsolidatedProposalHTML(c, grand)
+  });
 }
 
 async function sendConsolidatedLead(c, grand){
-  try{
-    await emailjs.send(EJS_SERVICE_ID, EJS_TEMPLATE_LEAD, {
-      to_email: LEAD_EMAIL,
-      to_name: 'Equipe Fatura Expert',
-      lead_html: buildConsolidatedLeadHTML(c, grand)
-    });
-  }catch(e){ console.warn('lead:', e); }
+  return await emailWithTimeout(EJS_SERVICE_ID, EJS_TEMPLATE_LEAD, {
+    to_email: LEAD_EMAIL,
+    to_name: 'Equipe Fatura Expert',
+    lead_html: buildConsolidatedLeadHTML(c, grand)
+  });
 }
 
 /* ═══════════════════════ EMAIL BUILDERS ═══════════════════════ */
@@ -713,13 +742,15 @@ function buildConsolidatedLeadHTML(c, grand){
 }
 
 async function sendProposalToClient(d){
-  if(!d.email) return;
-  try{ await emailjs.send(EJS_SERVICE_ID,EJS_TEMPLATE_ID,{to_email:d.email,to_name:d.nome,plano:d.plano,qty:d.qty,total:d.total,proposal_html:buildProposalHTML(d)}); }
-  catch(e){ console.warn('proposta:',e); }
+  if(!d.email) return {ok:true};
+  const r=await emailWithTimeout(EJS_SERVICE_ID,EJS_TEMPLATE_ID,{to_email:d.email,to_name:d.nome,plano:d.plano,qty:d.qty,total:d.total,proposal_html:buildProposalHTML(d)});
+  if(!r.ok) console.warn('proposta:',r.error);
+  return r;
 }
 async function sendLeadInternal(d){
-  try{ await emailjs.send(EJS_SERVICE_ID,EJS_TEMPLATE_LEAD,{to_email:LEAD_EMAIL,to_name:'Equipe Fatura Expert',lead_html:buildLeadHTML(d)}); }
-  catch(e){ console.warn('lead:',e); }
+  const r=await emailWithTimeout(EJS_SERVICE_ID,EJS_TEMPLATE_LEAD,{to_email:LEAD_EMAIL,to_name:'Equipe Fatura Expert',lead_html:buildLeadHTML(d)});
+  if(!r.ok) console.warn('lead:',r.error);
+  return r;
 }
 
 /* ═══════════════════════ JSONBIN CONFIG ═══════════════════════ */
