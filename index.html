@@ -343,7 +343,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   .results-bar{padding:0 5vw 16px;}
   .cards-section{padding:0 5vw 120px;}
   .modal-overlay,.cart-overlay{align-items:center;padding:20px;}
-  .modal-sheet,.cart-sheet{border-radius:22px;max-width:680px;max-height:calc(100vh - 40px);scrollbar-gutter:stable;}
+  .modal-sheet,.cart-sheet{border-radius:22px;max-width:680px;max-height:calc(100vh - 40px);}
   .modal-body{padding:16px 34px 24px;}
   .modal-form{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;}
   .modal-form .f-group.full,.modal-form .form-qty-row,.modal-form .form-total-row,.modal-form .form-hint,.modal-form .form-error,.modal-form #submitBtn{grid-column:1/-1;}
@@ -622,17 +622,34 @@ function renderCartView(){
   clearBtn.style.display='block';
 }
 
+/* trava o scroll da página sem deixar barra/gutter aparecendo */
+let _savedScrollY=0;
+function lockBody(){
+  _savedScrollY=window.scrollY||window.pageYOffset||0;
+  document.body.style.position='fixed';
+  document.body.style.top='-'+_savedScrollY+'px';
+  document.body.style.left='0';
+  document.body.style.right='0';
+  document.body.style.width='100%';
+}
+function unlockBody(){
+  document.body.style.position='';
+  document.body.style.top='';
+  document.body.style.left='';
+  document.body.style.right='';
+  document.body.style.width='';
+  window.scrollTo(0,_savedScrollY);
+}
+
 function openCartView(){
   renderCartView();
   document.getElementById('cartOverlay').classList.add('open');
-  document.documentElement.style.overflow='hidden';
-  document.body.style.overflow='hidden';
+  lockBody();
   document.querySelector('.theme-toggle').classList.add('hidden');
 }
 function closeCartView(){
   document.getElementById('cartOverlay').classList.remove('open');
-  document.documentElement.style.overflow='';
-  document.body.style.overflow='';
+  unlockBody();
   document.querySelector('.theme-toggle').classList.remove('hidden');
 }
 function removeItem(idx){ cart.splice(idx,1); updateCartBar(); renderCartView(); }
@@ -858,8 +875,7 @@ function openModal(idx){
   }
   document.getElementById('qtyInput').value=1; currentQty=1; updateTotal();
   document.getElementById('modalOverlay').classList.add('open');
-  document.documentElement.style.overflow='hidden';
-  document.body.style.overflow='hidden';
+  lockBody();
   document.querySelector('.theme-toggle').classList.add('hidden');
   requestAnimationFrame(()=>{
     const sheet=document.getElementById('modalSheet');
@@ -870,7 +886,7 @@ function openModal(idx){
     }
   });
 }
-function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); document.documentElement.style.overflow=''; document.body.style.overflow=''; document.querySelector('.theme-toggle').classList.remove('hidden'); }
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); unlockBody(); document.querySelector('.theme-toggle').classList.remove('hidden'); }
 function changeQty(delta){ let v=parseInt(document.getElementById('qtyInput').value)||1; v=Math.max(1,Math.min(999,v+delta)); document.getElementById('qtyInput').value=v; currentQty=v; updateTotal(); }
 function updateTotal(){
   const v=Math.max(1,parseInt(document.getElementById('qtyInput').value)||1);
