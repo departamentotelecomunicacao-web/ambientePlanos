@@ -103,6 +103,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .filter-btn.cat-internet.active{background:linear-gradient(135deg,#0891b2,#06b6d4);border-color:#0891b2;}
 .filter-btn.cat-combo.active{background:linear-gradient(135deg,#7c3aed,#8b5cf6);border-color:#7c3aed;}
 .filter-btn.cat-imperdivel.active{background:linear-gradient(135deg,#c2185b,#e91e63);border-color:#c2185b;}
+.filter-btn.cat-passaporte.active{background:linear-gradient(135deg,#0E7C66,#16A085);border-color:#0E7C66;}
 .op-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;}
 .dot-vivo{background:#6610f2;}.dot-claro{background:#e61e1e;}.dot-all{background:linear-gradient(135deg,#6610f2,#e61e1e);}
 .results-bar{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:0 16px 12px;animation:fadeUp .6s .22s ease both;}
@@ -129,10 +130,12 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .cat-badge.internet{background:#e0f7fa;color:#0891b2;}
 .cat-badge.combo{background:#ede9fe;color:#7c3aed;}
 .cat-badge.imperdivel{background:#fce4ec;color:#c2185b;}
+.cat-badge.passaporte{background:#E0F5EE;color:#0E7C66;}
 [data-theme="dark"] .cat-badge.movel{background:#1A2B4A;color:#6A9FFF;}
 [data-theme="dark"] .cat-badge.internet{background:#0A2830;color:#22D3EE;}
 [data-theme="dark"] .cat-badge.combo{background:#1E1535;color:#B48EFF;}
 [data-theme="dark"] .cat-badge.imperdivel{background:#2A0F1A;color:#F472B6;}
+[data-theme="dark"] .cat-badge.passaporte{background:#0E2A23;color:#5EEAD4;}
 .op-strip{display:flex;align-items:center;gap:8px;margin-bottom:11px;margin-top:4px;}
 .op-logo{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.72rem;flex-shrink:0;line-height:1.1;text-align:center;overflow:hidden;padding:2px;}
 .op-logo.vivo{background:#f0ebff;color:#6610f2;border:1px solid rgba(102,16,242,.2);}
@@ -150,6 +153,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 [data-theme="light"] .plan-card.cat-combo-card .gb-display{background:linear-gradient(135deg,#ede9fe,#f5f3ff);}
 [data-theme="dark"]  .plan-card.cat-combo-card .gb-display{background:linear-gradient(135deg,#1E1535,#160F28);}
 .plan-card.cat-combo-card .gb-number{background:linear-gradient(135deg,#7c3aed,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+[data-theme="light"] .plan-card.cat-passaporte-card .gb-display{background:linear-gradient(135deg,#E0F5EE,#F2FBF7);}
+[data-theme="dark"]  .plan-card.cat-passaporte-card .gb-display{background:linear-gradient(135deg,#0E2A23,#0A1A17);}
+.plan-card.cat-passaporte-card .gb-number{background:linear-gradient(135deg,#0E7C66,#16A085);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .features{list-style:none;margin-bottom:13px;display:flex;flex-direction:column;gap:5px;}
 .features li{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--soft);}
 .features li::before{content:'✓';width:15px;height:15px;border-radius:50%;background:var(--qty-bg);display:flex;align-items:center;justify-content:center;font-size:.56rem;color:var(--blue);font-weight:700;flex-shrink:0;}
@@ -165,6 +171,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .plan-card.featured .btn-contratar:hover{box-shadow:0 6px 18px rgba(255,107,26,.4);}
 .plan-card.cat-imperdivel-card:not(.featured) .btn-contratar{background:linear-gradient(135deg,#c2185b,#e91e63);box-shadow:0 3px 10px rgba(194,24,91,.28);}
 .plan-card.cat-combo-card .btn-contratar{background:linear-gradient(135deg,#7c3aed,#a78bfa);box-shadow:0 3px 10px rgba(124,58,237,.28);}
+.plan-card.cat-passaporte-card:not(.featured) .btn-contratar{background:linear-gradient(135deg,#0E7C66,#16A085);box-shadow:0 3px 10px rgba(14,124,102,.28);}
 
 /* ── PLAN MODAL ── */
 .modal-overlay{display:none;position:fixed;inset:0;z-index:300;background:var(--modal-over);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;}
@@ -389,6 +396,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     <button class="filter-btn cat-movel"       onclick="setCatFilter('movel',this)">📱 Móvel</button>
     <button class="filter-btn cat-internet"    onclick="setCatFilter('internet',this)">🌐 Banda Larga</button>
     <button class="filter-btn cat-combo"       onclick="setCatFilter('combo',this)">📦 Combos</button>
+    <button class="filter-btn cat-passaporte"  onclick="setCatFilter('passaporte',this)">✈️ Passaportes</button>
   </div>
 </div>
 
@@ -784,7 +792,7 @@ const JB_BIN_ID     = '69f5596caaba8821975fce30';
 let plans = [];
 
 const opColors={vivo:'#6610f2',claro:'#e61e1e'};
-const catLabels={movel:'📱 Móvel',internet:'🌐 Banda Larga',combo:'📦 Combo',imperdivel:'🔥 Oferta Imperdível'};
+const catLabels={movel:'📱 Móvel',internet:'🌐 Banda Larga',combo:'📦 Combo',imperdivel:'🔥 Oferta Imperdível',passaporte:'✈️ Passaporte'};
 const opLabels={all:'Todas as operadoras',vivo:'Vivo',claro:'Claro'};
 let activeOp='all',activeCat='all',currentIdx=0,currentQty=1,currentUnit=0;
 
@@ -826,7 +834,7 @@ function renderCards(){
               :`<div class="gb-number" style="font-size:1.2rem;padding:4px 8px;">${p.speed}</div><div class="gb-label">serviço incluso</div>`;
     }
     const card=document.createElement('div');
-    const xc=p.cat==='imperdivel'?'cat-imperdivel-card':p.cat==='combo'?'cat-combo-card':'';
+    const xc=p.cat==='imperdivel'?'cat-imperdivel-card':p.cat==='combo'?'cat-combo-card':p.cat==='passaporte'?'cat-passaporte-card':'';
     card.className='plan-card'+(p.featured?' featured':'')+' '+xc;
     card.style.animationDelay=(n*0.045)+'s';
     card.innerHTML=`
