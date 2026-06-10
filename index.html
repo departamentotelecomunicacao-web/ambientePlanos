@@ -43,7 +43,7 @@
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html{font-size:16px;overflow-x:hidden;scrollbar-width:none;-ms-overflow-style:none;}
 html::-webkit-scrollbar{display:none;}
-body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s;max-width:100vw;scrollbar-width:none;-ms-overflow-style:none;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s;max-width:100vw;scrollbar-width:none;-ms-overflow-style:none;padding-left:10px;padding-right:0;box-sizing:border-box;}
 body::-webkit-scrollbar{display:none;}
 body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   background:radial-gradient(ellipse 70% 50% at 0% 0%,rgba(37,99,235,.06) 0%,transparent 60%),
@@ -392,19 +392,19 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   .brand-link-label{ font-size:.6rem; }
 }
 
-/* ── CTA: Fale com um especialista (popup com timer) ── */
+/* ── CTA: toast no topo central (visível para todos no iframe) ── */
 .cta-specialist{
-  position:fixed; bottom:24px; right:18px; z-index:198;
-  display:inline-flex; align-items:center; gap:9px;
+  position:absolute; top:78px; left:50%; z-index:198;
+  display:inline-flex; align-items:center; gap:10px;
   background:linear-gradient(135deg,#25D366,#128C7E);
   color:#fff; text-decoration:none;
-  border-radius:50px; padding:13px 22px 13px 17px;
-  font-family:'Sora',sans-serif; font-weight:700; font-size:.84rem; letter-spacing:.2px;
-  box-shadow:0 6px 22px rgba(37,211,102,.42);
-  transition:transform .35s cubic-bezier(.32,.72,0,1),opacity .35s,box-shadow .25s;
-  opacity:0; transform:translateY(28px) scale(.85); pointer-events:none;
+  border-radius:50px; padding:14px 26px 14px 20px;
+  font-family:'Sora',sans-serif; font-weight:700; font-size:.86rem; letter-spacing:.2px;
+  box-shadow:0 8px 28px rgba(37,211,102,.55);
+  transition:transform .4s cubic-bezier(.32,.72,0,1),opacity .35s,box-shadow .25s;
+  opacity:0; transform:translate(-50%,-22px) scale(.9); pointer-events:none;
 }
-.cta-specialist.visible{ opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
+.cta-specialist.visible{ opacity:1; transform:translate(-50%,0) scale(1); pointer-events:auto; }
 .cta-specialist::before{
   content:''; position:absolute; inset:-2px; border-radius:50px;
   border:2px solid rgba(37,211,102,.55); z-index:-1;
@@ -416,18 +416,13 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   70%  { transform:scale(1.22); opacity:0; }
   100% { transform:scale(1.22); opacity:0; }
 }
-.cta-specialist.visible:hover{ transform:translateY(-2px) scale(1); box-shadow:0 9px 28px rgba(37,211,102,.58); }
+.cta-specialist.visible:hover{ transform:translate(-50%,-2px) scale(1); box-shadow:0 12px 34px rgba(37,211,102,.65); }
 .cta-specialist svg{ width:20px; height:20px; flex-shrink:0; fill:#fff; }
 .cta-specialist .cta-text{ white-space:nowrap; }
 
-/* sobe quando o cart-bar aparece pra não sobrepor */
-.cart-bar.show ~ .cta-specialist{ bottom:88px; }
-
 @media(max-width:560px){
-  .cta-specialist{ padding:14px; bottom:18px; right:14px; gap:0; }
-  .cta-specialist .cta-text{ display:none; }
-  .cta-specialist svg{ width:24px; height:24px; }
-  .cart-bar.show ~ .cta-specialist{ bottom:82px; }
+  .cta-specialist{ top:68px; padding:12px 20px 12px 16px; font-size:.76rem; }
+  .cta-specialist svg{ width:18px; height:18px; }
 }
 </style>
 </head>
@@ -1083,10 +1078,13 @@ initPlans();
 (function(){
   const cta = document.querySelector('.cta-specialist');
   if(!cta) return;
-  /* aparece 5s após o load */
   setTimeout(()=>{
     cta.classList.add('visible');
-    /* fica 4s visível e depois esconde */
+    /* tenta posicionar perto da viewport do usuário (caso iframe esteja com Wix rolado) */
+    try{
+      const y = (window.pageYOffset||window.scrollY||0) + 60;
+      cta.style.top = y + 'px';
+    }catch(e){}
     setTimeout(()=>{ cta.classList.remove('visible'); }, 4000);
   }, 5000);
 })();
