@@ -392,7 +392,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   .brand-link-label{ font-size:.6rem; }
 }
 
-/* ── CTA: Fale com um especialista (canto inferior direito) ── */
+/* ── CTA: Fale com um especialista (popup com timer) ── */
 .cta-specialist{
   position:fixed; bottom:24px; right:18px; z-index:198;
   display:inline-flex; align-items:center; gap:9px;
@@ -401,9 +401,10 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   border-radius:50px; padding:13px 22px 13px 17px;
   font-family:'Sora',sans-serif; font-weight:700; font-size:.84rem; letter-spacing:.2px;
   box-shadow:0 6px 22px rgba(37,211,102,.42);
-  transition:transform .25s,box-shadow .25s;
-  animation:ctaIntro .8s .3s ease both;
+  transition:transform .35s cubic-bezier(.32,.72,0,1),opacity .35s,box-shadow .25s;
+  opacity:0; transform:translateY(28px) scale(.85); pointer-events:none;
 }
+.cta-specialist.visible{ opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
 .cta-specialist::before{
   content:''; position:absolute; inset:-2px; border-radius:50px;
   border:2px solid rgba(37,211,102,.55); z-index:-1;
@@ -415,11 +416,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   70%  { transform:scale(1.22); opacity:0; }
   100% { transform:scale(1.22); opacity:0; }
 }
-@keyframes ctaIntro{
-  from{ opacity:0; transform:translateY(20px) scale(.85);}
-  to  { opacity:1; transform:translateY(0)    scale(1);}
-}
-.cta-specialist:hover{ transform:translateY(-2px); box-shadow:0 9px 28px rgba(37,211,102,.58); }
+.cta-specialist.visible:hover{ transform:translateY(-2px) scale(1); box-shadow:0 9px 28px rgba(37,211,102,.58); }
 .cta-specialist svg{ width:20px; height:20px; flex-shrink:0; fill:#fff; }
 .cta-specialist .cta-text{ white-space:nowrap; }
 
@@ -1081,6 +1078,38 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){ if
 document.getElementById('cartOverlay').addEventListener('click',function(e){ if(e.target===this) closeCartView(); });
 document.getElementById('qtyInput').addEventListener('input',updateTotal);
 initPlans();
+
+/* ── CTA "Falar com especialista" — popup: aparece em 5s, some em 4s ── */
+(function(){
+  const cta = document.querySelector('.cta-specialist');
+  if(!cta) return;
+  /* aparece 5s após o load */
+  setTimeout(()=>{
+    cta.classList.add('visible');
+    /* fica 4s visível e depois esconde */
+    setTimeout(()=>{ cta.classList.remove('visible'); }, 4000);
+  }, 5000);
+})();
+
+/* ── Broadcast da altura real da página para o Wix (auto-resize do iframe) ── */
+(function(){
+  function postHeight(){
+    const h = Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight,
+      document.body.offsetHeight,
+      document.documentElement.offsetHeight
+    );
+    try{
+      window.parent.postMessage({ type:'fe-iframe-height', height: h }, '*');
+      window.parent.postMessage({ height: h }, '*'); /* formato alternativo aceito por alguns plugins Wix */
+    }catch(e){}
+  }
+  window.addEventListener('load', postHeight);
+  window.addEventListener('resize', postHeight);
+  /* re-emite periodicamente caso o conteúdo cresça (cards carregados, carrinho, etc.) */
+  setInterval(postHeight, 1500);
+})();
 </script>
 </body>
 </html>
