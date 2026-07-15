@@ -876,7 +876,7 @@ const OP_BASE={
   vivo: { label:'Vivo',  light:{bg:'#f0ebff',fg:'#6610f2',bd:'rgba(102,16,242,.22)'}, dark:{bg:'#1E1535',fg:'#B48EFF',bd:'rgba(180,142,255,.22)'} },
   claro:{ label:'Claro', light:{bg:'#fff0f0',fg:'#e61e1e',bd:'rgba(230,30,30,.22)'},  dark:{bg:'#2A0F0F',fg:'#FF6666',bd:'rgba(255,102,102,.22)'} },
   tim:  { label:'TIM',   hue:214 },
-  nio:  { label:'NIO',   hue:38  }
+  nio:  { label:'NIO',   hue:145 }
 };
 function opSlug(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); }
 function hueFromSlug(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))%360; } return h; }
