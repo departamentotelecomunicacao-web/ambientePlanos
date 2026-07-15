@@ -466,9 +466,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 <div class="filters-wrapper">
   <div class="filter-group-label">Operadora</div>
   <div class="filter-bar" id="opFilterBar">
-    <button class="filter-btn active"  onclick="setOpFilter('all',this)"><span class="op-dot dot-all"></span>Todas</button>
-    <button class="filter-btn vivo"    onclick="setOpFilter('vivo',this)"><span class="op-dot dot-vivo"></span>Vivo</button>
-    <button class="filter-btn claro"   onclick="setOpFilter('claro',this)"><span class="op-dot dot-claro"></span>Claro</button>
+    <!-- botões de operadora gerados dinamicamente por renderOpFilter() -->
   </div>
   <div class="filter-group-label">Categoria</div>
   <div class="filter-bar" id="catFilterBar">
@@ -640,6 +638,7 @@ function toggleTheme(){
   html.setAttribute('data-theme',next);
   document.getElementById('themeLabel').textContent=next==='dark'?'Modo claro':'Modo escuro';
   try{ localStorage.setItem('fe-theme',next); }catch(e){}
+  if(typeof plans!=='undefined' && plans.length){ renderOpFilter(); renderCards(); }
 }
 (function(){
   let s='light'; try{ s=localStorage.getItem('fe-theme')||'light'; }catch(e){}
@@ -872,16 +871,57 @@ const JB_BIN_ID     = '69f5596caaba8821975fce30';
 /* ═══════════════════════ PLANS (carregado da nuvem) ═══════════════════════ */
 let plans = [];
 
-const opColors={vivo:'#6610f2',claro:'#e61e1e'};
+/* ═══ OPERADORAS — registro dinâmico (aceita qualquer operadora nova) ═══ */
+const OP_BASE={
+  vivo: { label:'Vivo',  light:{bg:'#f0ebff',fg:'#6610f2',bd:'rgba(102,16,242,.22)'}, dark:{bg:'#1E1535',fg:'#B48EFF',bd:'rgba(180,142,255,.22)'} },
+  claro:{ label:'Claro', light:{bg:'#fff0f0',fg:'#e61e1e',bd:'rgba(230,30,30,.22)'},  dark:{bg:'#2A0F0F',fg:'#FF6666',bd:'rgba(255,102,102,.22)'} },
+  tim:  { label:'TIM',   hue:214 },
+  oi:   { label:'Oi',    hue:38  }
+};
+function opSlug(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); }
+function hueFromSlug(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))%360; } return h; }
+function opStyle(op){
+  const slug=opSlug(op); const e=OP_BASE[slug];
+  if(e&&e.light) return {light:e.light,dark:e.dark};
+  const H = (e&&e.hue!=null)? e.hue : hueFromSlug(slug||'x');
+  return {
+    light:{ bg:`hsl(${H},72%,94%)`, fg:`hsl(${H},68%,40%)`, bd:`hsla(${H},68%,40%,.22)` },
+    dark :{ bg:`hsl(${H},42%,15%)`, fg:`hsl(${H},85%,72%)`, bd:`hsla(${H},85%,72%,.22)` }
+  };
+}
+function isDarkTheme(){ return document.documentElement.getAttribute('data-theme')==='dark'; }
+function opThemeStyle(op){ const s=opStyle(op); return isDarkTheme()?s.dark:s.light; }
+function opColorFor(op){ return opThemeStyle(op).fg; }
+function getOpLabel(op){
+  const slug=opSlug(op);
+  if(OP_BASE[slug]) return OP_BASE[slug].label;
+  const found=plans.find(p=>opSlug(p.op)===slug);
+  if(found&&found.opLabel) return found.opLabel;
+  return op? op.charAt(0).toUpperCase()+op.slice(1):op;
+}
 const catLabels={movel:'📱 Móvel',internet:'🌐 Banda Larga',combo:'📦 Combo',imperdivel:'🔥 Oferta Imperdível',passaporte:'✈️ Passaporte'};
-const opLabels={all:'Todas as operadoras',vivo:'Vivo',claro:'Claro'};
 let activeOp='all',activeCat='all',currentIdx=0,currentQty=1,currentUnit=0;
+
+/* Monta a barra de operadoras a partir dos planos existentes */
+function renderOpFilter(){
+  const bar=document.getElementById('opFilterBar'); if(!bar) return;
+  const seen=[]; plans.forEach(p=>{ const s=opSlug(p.op); if(s&&!seen.includes(s)) seen.push(s); });
+  let html=`<button class="filter-btn${activeOp==='all'?' active':''}" onclick="setOpFilter('all',this)"><span class="op-dot" style="background:linear-gradient(135deg,#6610f2,#e61e1e)"></span>Todas</button>`;
+  seen.forEach(op=>{
+    const c=opColorFor(op); const on=activeOp===op;
+    const style=on?` style="background:${c};border-color:${c};color:#fff"`:'';
+    html+=`<button class="filter-btn${on?' active':''}"${style} onclick="setOpFilter('${op}',this)"><span class="op-dot" style="background:${c}"></span>${getOpLabel(op)}</button>`;
+  });
+  bar.innerHTML=html;
+}
 
 /* ═══════════════════════ FILTERS ═══════════════════════ */
 function setOpFilter(op,btn){
   activeOp=op;
-  document.querySelectorAll('#opFilterBar .filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); renderCards();
+  document.querySelectorAll('#opFilterBar .filter-btn').forEach(b=>{ b.classList.remove('active'); b.style.background=''; b.style.borderColor=''; b.style.color=''; });
+  btn.classList.add('active');
+  if(op!=='all'){ const c=opColorFor(op); btn.style.background=c; btn.style.borderColor=c; btn.style.color='#fff'; }
+  renderCards();
 }
 function setCatFilter(cat,btn){
   activeCat=cat;
@@ -892,14 +932,14 @@ function renderCards(){
   const grid=document.getElementById('cardsGrid'); grid.innerHTML=''; let n=0;
   const visible=[];
   plans.forEach((p,gi)=>{
-    if(activeOp!=='all'&&p.op!==activeOp) return;
+    if(activeOp!=='all'&&opSlug(p.op)!==activeOp) return;
     if(activeCat!=='all'&&p.cat!==activeCat) return;
     visible.push({p,gi});
   });
   visible.sort((a,b)=>a.p.featured===b.p.featured?0:a.p.featured?1:-1);
   document.getElementById('resultsCount').innerHTML=`<strong>${visible.length}</strong> plano${visible.length!==1?'s':''} encontrado${visible.length!==1?'s':''}`;
   const tagsEl=document.getElementById('activeTags'); tagsEl.innerHTML='';
-  if(activeOp!=='all') tagsEl.innerHTML+=`<span class="active-tag">${opLabels[activeOp]}</span>`;
+  if(activeOp!=='all') tagsEl.innerHTML+=`<span class="active-tag">${getOpLabel(activeOp)}</span>`;
   if(activeCat!=='all') tagsEl.innerHTML+=`<span class="active-tag">${catLabels[activeCat]}</span>`;
   if(!visible.length){
     grid.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><h3>Nenhum plano encontrado</h3><p>Tente combinar outros filtros.</p></div>`;
@@ -924,8 +964,8 @@ function renderCards(){
         ${p.featured?'<div class="destaque-badge">DESTAQUE</div>':''}
       </div>
       <div class="op-strip">
-        <div class="op-logo ${p.op}">${p.opLabel.toUpperCase()}</div>
-        <div><div class="op-name">${p.opLabel}</div><div class="plan-name">${p.name}</div></div>
+        <div class="op-logo" style="background:${opThemeStyle(p.op).bg};color:${opThemeStyle(p.op).fg};border:1px solid ${opThemeStyle(p.op).bd};">${(p.opLabel||p.op).toUpperCase()}</div>
+        <div><div class="op-name">${p.opLabel||getOpLabel(p.op)}</div><div class="plan-name">${p.name}</div></div>
       </div>
       <div class="gb-display">${gbHtml}</div>
       <ul class="features">${p.features.map(f=>`<li class="${f===p.highlight?'highlight':''}">${f}</li>`).join('')}</ul>
@@ -939,8 +979,8 @@ function renderCards(){
 function openModal(idx){
   currentIdx=idx; currentQty=1;
   const p=plans[idx]; currentUnit=p.priceNum;
-  document.getElementById('mBadge').textContent=p.opLabel.toUpperCase();
-  document.getElementById('mBadge').style.color=opColors[p.op];
+  document.getElementById('mBadge').textContent=(p.opLabel||p.op).toUpperCase();
+  document.getElementById('mBadge').style.color=opColorFor(p.op);
   document.getElementById('mTitle').textContent=p.name;
   document.getElementById('mSub').textContent=p.sub;
   document.getElementById('mPrice').textContent=p.price;
@@ -1033,6 +1073,7 @@ async function initPlans() {
   //    → página aparece instantaneamente para o usuário
   plans = loadPlans();
   plans.forEach(p => { p.price = fmtBRL(p.priceNum); });
+  renderOpFilter();
   renderCards();
 
   // 2. Busca da nuvem em background — sem abortar cedo
@@ -1060,6 +1101,7 @@ async function initPlans() {
     if (cloudHash !== localHash) {
       plans = raw;
       plans.forEach(p => { p.price = fmtBRL(p.priceNum); });
+      renderOpFilter();
       renderCards();
     }
   } catch(e) {

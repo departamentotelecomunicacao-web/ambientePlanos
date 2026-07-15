@@ -207,10 +207,11 @@ select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%
     <div class="form-grid">
       <div class="f-group">
         <label class="f-label" for="fOp">Operadora <span>*</span></label>
-        <select id="fOp">
-          <option value="vivo">Vivo</option>
-          <option value="claro">Claro</option>
+        <select id="fOp" onchange="onOpChange()">
+          <!-- opções geradas por renderOpOptions() -->
         </select>
+        <input type="text" id="fOpNew" placeholder="Nome da nova operadora (ex: TIM)" style="display:none;margin-top:6px;"/>
+        <span class="hint" id="fOpHint" style="display:none;">A operadora será criada ao adicionar o plano.</span>
       </div>
       <div class="f-group">
         <label class="f-label" for="fCat">Categoria <span>*</span></label>
@@ -323,6 +324,53 @@ let editingIndex = -1; // -1 = adicionando novo; >= 0 = índice do plano sendo e
 function fmtBRL(v){ return 'R$ '+Number(v).toFixed(2).replace('.',','); }
 const catLabels = { movel:'📱 Móvel', internet:'🌐 Banda Larga', combo:'📦 Combo', imperdivel:'🔥 Imperdível', passaporte:'✈️ Passaporte' };
 
+/* ═══ OPERADORAS — registro dinâmico (mesma lógica da loja) ═══ */
+const OP_BASE = {
+  vivo: { label:'Vivo',  light:{bg:'#f0ebff',fg:'#6610f2',bd:'rgba(102,16,242,.22)'} },
+  claro:{ label:'Claro', light:{bg:'#fff0f0',fg:'#e61e1e',bd:'rgba(230,30,30,.22)'} },
+  tim:  { label:'TIM',   hue:214 },
+  oi:   { label:'Oi',    hue:38  }
+};
+function opSlug(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); }
+function hueFromSlug(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))%360; } return h; }
+function opStyleLight(op){
+  const slug=opSlug(op); const e=OP_BASE[slug];
+  if(e&&e.light) return e.light;
+  const H=(e&&e.hue!=null)? e.hue : hueFromSlug(slug||'x');
+  return { bg:`hsl(${H},72%,94%)`, fg:`hsl(${H},68%,40%)`, bd:`hsla(${H},68%,40%,.22)` };
+}
+function getOpLabel(op){
+  const slug=opSlug(op);
+  if(OP_BASE[slug]) return OP_BASE[slug].label;
+  const found=plans.find(p=>opSlug(p.op)===slug);
+  if(found&&found.opLabel) return found.opLabel;
+  return op? op.charAt(0).toUpperCase()+op.slice(1):op;
+}
+/* lista de operadoras conhecidas: base + as já usadas nos planos */
+function knownOps(){
+  const list=[];
+  Object.keys(OP_BASE).forEach(s=>list.push(s));
+  plans.forEach(p=>{ const s=opSlug(p.op); if(s&&!list.includes(s)) list.push(s); });
+  return list;
+}
+/* preenche o <select> de operadora */
+function renderOpOptions(selected){
+  const sel=document.getElementById('fOp'); if(!sel) return;
+  const cur = selected!=null ? opSlug(selected) : opSlug(sel.value);
+  let html='';
+  knownOps().forEach(s=>{ html+=`<option value="${s}">${getOpLabel(s)}</option>`; });
+  html+=`<option value="__new__">➕ Outra operadora…</option>`;
+  sel.innerHTML=html;
+  if(cur && cur!=='__new__' && knownOps().includes(cur)) sel.value=cur;
+}
+/* mostra/esconde o campo de nova operadora */
+function onOpChange(){
+  const isNew=document.getElementById('fOp').value==='__new__';
+  document.getElementById('fOpNew').style.display  = isNew?'block':'none';
+  document.getElementById('fOpHint').style.display = isNew?'block':'none';
+  if(isNew) document.getElementById('fOpNew').focus();
+}
+
 /* ─── LOADING ─── */
 function setLoading(show, txt='Conectando à nuvem...') {
   const ov = document.getElementById('loadingOverlay');
@@ -416,6 +464,8 @@ async function init() {
     nextId = plans.length;
   }
   setLoading(false);
+  renderOpOptions('vivo');
+  onOpChange();
   renderList();
 }
 
@@ -429,7 +479,7 @@ function renderList() {
   el.innerHTML = plans.map((p, i) => `
     <div class="plan-row" id="row-${p._id}">
       ${p.featured ? '<div class="featured-dot" title="Destaque"></div>' : '<div style="width:7px"></div>'}
-      <div class="plan-row-op op-${p.op}">${p.opLabel.toUpperCase()}</div>
+      <div class="plan-row-op" style="background:${opStyleLight(p.op).bg};color:${opStyleLight(p.op).fg};border:1px solid ${opStyleLight(p.op).bd};">${(p.opLabel||p.op).toUpperCase()}</div>
       <div class="plan-row-info">
         <div class="plan-row-name">${p.name}</div>
         <div class="plan-row-meta">
@@ -447,22 +497,23 @@ function renderList() {
   renderStats();
 }
 
-/* ─── STATS ─── */
+/* ─── STATS (dinâmico: um card por operadora presente) ─── */
 function renderStats() {
   const total = plans.length;
-  const vivo  = plans.filter(p => p.op === 'vivo').length;
-  const claro = plans.filter(p => p.op === 'claro').length;
   const dest  = plans.filter(p => p.featured).length;
-  document.getElementById('statsRow').innerHTML = `
-    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Total de planos</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#6610f2">${vivo}</div><div class="stat-lbl">Vivo</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#e61e1e">${claro}</div><div class="stat-lbl">Claro</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#FF6B1A">${dest}</div><div class="stat-lbl">Destaques</div></div>`;
+  const byOp  = {};
+  plans.forEach(p => { const s = opSlug(p.op); if(!s) return; byOp[s] = (byOp[s]||0) + 1; });
+  let cards = `<div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Total de planos</div></div>`;
+  Object.keys(byOp).forEach(s => {
+    cards += `<div class="stat-card"><div class="stat-val" style="color:${opStyleLight(s).fg}">${byOp[s]}</div><div class="stat-lbl">${getOpLabel(s)}</div></div>`;
+  });
+  cards += `<div class="stat-card"><div class="stat-val" style="color:#FF6B1A">${dest}</div><div class="stat-lbl">Destaques</div></div>`;
+  document.getElementById('statsRow').innerHTML = cards;
 }
 
 /* ─── ADD / ATUALIZAR PLAN ─── */
 function addPlan() {
-  const op          = document.getElementById('fOp').value;
+  const opRaw       = document.getElementById('fOp').value;
   const cat         = document.getElementById('fCat').value;
   const name        = document.getElementById('fName').value.trim();
   const speed       = document.getElementById('fSpeed').value.trim();
@@ -479,7 +530,19 @@ function addPlan() {
   if (isNaN(priceNum) || priceNum <= 0) { notify('Preço inválido.', 'err'); return; }
   const features = featuresRaw.split('\n').map(l => l.trim()).filter(Boolean);
   if (!features.length) { notify('Informe ao menos um benefício.', 'err'); return; }
-  const opLabel = op === 'vivo' ? 'Vivo' : 'Claro';
+
+  // Resolve a operadora: existente OU nova digitada
+  let op, opLabel;
+  if (opRaw === '__new__') {
+    const nm = document.getElementById('fOpNew').value.trim();
+    if (!nm) { notify('Digite o nome da nova operadora.', 'err'); return; }
+    op = opSlug(nm);
+    if (!op) { notify('Nome de operadora inválido.', 'err'); return; }
+    opLabel = OP_BASE[op] ? OP_BASE[op].label : nm;
+  } else {
+    op = opSlug(opRaw);
+    opLabel = getOpLabel(op);
+  }
 
   if (editingIndex >= 0) {
     // ATUALIZA o plano existente no lugar — sem apagar e sem criar duplicata
@@ -516,7 +579,10 @@ function deletePlan(i) {
 /* ─── EDIT PLAN ─── */
 function editPlan(i) {
   const p = plans[i];
-  document.getElementById('fOp').value        = p.op;
+  renderOpOptions(p.op);                 // garante que a operadora do plano esteja no select
+  document.getElementById('fOp').value        = opSlug(p.op);
+  document.getElementById('fOpNew').value      = '';
+  onOpChange();                          // esconde o campo de nova operadora
   document.getElementById('fCat').value       = p.cat;
   document.getElementById('fName').value      = p.name;
   document.getElementById('fSpeed').value     = p.speed;
@@ -538,7 +604,10 @@ function editPlan(i) {
 function clearForm() {
   ['fName','fSpeed','fPrice','fSub','fFeatures','fHighlight'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('fFeatured').checked = false;
+  renderOpOptions('vivo');
   document.getElementById('fOp').value  = 'vivo';
+  document.getElementById('fOpNew').value = '';
+  onOpChange();
   document.getElementById('fCat').value = 'imperdivel';
   // Reseta modo de edição
   editingIndex = -1;
